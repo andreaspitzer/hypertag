@@ -8,7 +8,7 @@
   + ✅  **Hyperfast.** 50 × faster than cheerio, 30 × parse5, 10 × htmlparser2.
   + ✅  **Tiny.** < 500 bytes gzipped.
   + ✅  **Complete** Zero dependencies.
-  + ✅  **Robust.** 100% Code Coverage. [![coveralls-badge][]]() [![travis-build-badge][]]()
+  + ✅  **Robust.** 100% Code Coverage. [![ci-badge]][ci-link]
 
 ## 💻 Use
 ```js
@@ -104,6 +104,5 @@ Fastest is hypertag
 
 [npm-version-badge]:    https://flat.badgen.net/npm/v/hypertag
 [npm-license-badge]:    https://flat.badgen.net/npm/license/hypertag
-[travis-build-badge]:   https://flat.badgen.net/travis/AndreasPizsa/hypertag
-[coveralls-badge]:      https://flat.badgen.net/coveralls/c/github/AndreasPizsa/hypertag
-[bundlepohobia-badge]:  https://flat.badgen.net/bundlepohobia/minzip/hypertag
+[ci-badge]:             https://img.shields.io/github/actions/workflow/status/andreaspitzer/hypertag/ci.yml?branch=master&style=flat-square&label=CI
+[ci-link]:              https://github.com/andreaspitzer/hypertag/actions/workflows/ci.yml

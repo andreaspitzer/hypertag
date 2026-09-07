@@ -114,9 +114,10 @@ test('match all tags', t => {
     .map(tag => `<${tag}></${tag}>`)
     .join('\n')
     + '<title>'
-  const expected = generatedTags
-    .map(tagname => ({'<': tagname}))
-    .concat([{'<': 'title'}])
+  const expected = [
+    ...generatedTags.map(tagname => ({'<': tagname})),
+    {'<': 'title'}
+  ]
 
   const result = parseTags(html, '*')
   t.deepEqual(result, expected)

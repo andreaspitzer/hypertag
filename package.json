@@ -1,21 +1,50 @@
 {
   "name": "hypertag",
   "version": "0.0.6",
-  "main": "dist/index.js",
-  "umd:main": "dist/index.umd.js",
-  "module": "dist/index.mjs",
+  "description": "The fastest HTML tag and attributes parser — a superfast getElementsByTagName without the DOM.",
+  "keywords": [
+    "html",
+    "parser",
+    "tag",
+    "tags",
+    "attributes",
+    "getElementsByTagName",
+    "fast",
+    "scraper",
+    "meta",
+    "opengraph",
+    "favicon"
+  ],
+  "author": "Andreas Pitzer <hopster@gmail.com> (https://github.com/andreaspitzer)",
+  "repository": "andreaspitzer/hypertag",
+  "license": "MIT",
   "source": "hypertag.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "dist/index.js",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "index.d.ts"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "build": "rimraf dist && microbundle",
+    "build": "rimraf dist && microbundle -f cjs",
     "test": "nyc ava",
-    "prepublish": "npm test && npm run build",
     "pretest": "xo",
+    "smoke": "node scripts/smoke.cjs",
+    "prepublishOnly": "npm test && npm run build && npm run smoke",
     "release": "standard-version"
   },
-  "keywords": [],
-  "author": "Andreas Pizsa <hopster@gmail.com> (https://github.com/AndreasPizsa)",
-  "repository": "AndreasPizsa/hypertag",
-  "license": "MIT",
   "devDependencies": {
     "@andreaspizsa/eslint-config-xo": "^0.2.0",
     "@commitlint/cli": "^9.1.2",
@@ -41,6 +70,10 @@
   "xo": {
     "semicolon": false,
     "space": true,
+    "ignores": [
+      "dist",
+      "*.d.ts"
+    ],
     "rules": {
       "unicorn/prefer-module": 0,
       "padding-line-between-statements": 0,
@@ -50,7 +83,6 @@
       "@andreaspizsa/eslint-config-xo"
     ]
   },
-  "description": "",
   "commitlint": {
     "extends": [
       "@commitlint/config-conventional"
@@ -65,9 +97,5 @@
     "scripts": {
       "prerelease": "npm test && npm run build"
     }
-  },
-  "postinstaller": {
-    "add your config here": true,
-    "see": "https://npmjs.com/postinstaller#readme"
   }
 }

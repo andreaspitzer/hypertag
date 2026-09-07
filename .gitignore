@@ -79,3 +79,6 @@ typings/
 .dynamodb/ 
 
 dist/
+
+# microbundle-generated stray types (hand-authored index.d.ts is canonical)
+hypertag.d.ts
