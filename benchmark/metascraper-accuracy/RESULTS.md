@@ -12,7 +12,8 @@ change, so the fixtures are committed to pin this run.
 | metascraper | 37/42 | - |
 | open-graph-scraper | 26/42 | 29/42 |
 | hypertag (raw rule layer) | 23/42 | 26/42 |
-| hypertag + `hypertag/sanitize` | 23/42 | **27/42** |
+| hypertag + `hypertag/sanitize` | 23/42 | 27/42 |
+| hypertag + sanitize + `{content: true}` | **28/42** | **30/42** |
 
 ## Per field (pages filled, out of 6)
 
@@ -59,9 +60,27 @@ ones, so `author`/`date` stay 0 (JSON-LD) and coverage stays 23/42. Concretely:
 - The residual YouTube `…` difference is metascraper's title *prettification* (trailing `...`
   -> `…`), which hypertag deliberately does not do - it returns what the page said.
 
+## What the `{content: true}` option changes
+
+Adding the core `content` option (capture the text between the tags) lets the rule layer read
+the two things that were structurally out of reach - and it moves the numbers accordingly:
+**28/42 coverage, 30/42 agreement**, ahead of open-graph-scraper. The five recovered fields
+are exactly the between-the-tags kind:
+
+- **MDN title** from the `<title>` element text (was missed; now matches metascraper).
+- **Wikipedia author, date, publisher** and **YouTube date** from JSON-LD `<script>` bodies.
+
+Three of the five match metascraper exactly. The two dates are *covered but formatted
+differently*: we return the raw JSON-LD ISO string, metascraper normalizes dates with
+`chrono-node`. The remaining gap to metascraper's 37 is mostly `author` (it fills 6/6 via a
+much richer set of author heuristics; our small rule layer finds it in JSON-LD on one page) -
+that is rule-layer sophistication and date normalization, not a hypertag capability limit. The
+capability - reading element text and JSON-LD - is now present.
+
 ## Takeaway
 
-open-graph-scraper sits between the two: like hypertag it cannot read JSON-LD (author/date =
-0), but unlike hypertag it reads element text. metascraper's weight buys exactly two things
-over a raw-tag reader here - **JSON-LD parsing** and **text extraction / normalization**. On
-plain OpenGraph tags, hypertag (zero-dependency core + the ~1.3 kB sanitize layer) matches it.
+open-graph-scraper reads element text but not JSON-LD, so it plateaus at author/date = 0.
+metascraper's weight buys **JSON-LD parsing** and **text extraction / normalization**. With
+the `content` option plus the ~1.3 kB sanitize layer, hypertag now does both from a
+zero-dependency core - closing most of the gap; what remains is the breadth of metascraper's
+per-field rules, not a structural wall.

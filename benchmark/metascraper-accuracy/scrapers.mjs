@@ -104,6 +104,56 @@ export default [
   },
 
   {
+    // The rule layer plus the two things the `content` option unlocks: the <title> element's
+    // text (a fallback for pages with no og:title) and JSON-LD <script> bodies (author, date,
+    // and more). This is what closes the structural gap - the fields that live between tags,
+    // not in attributes. Output is normalized through sanitize/cleanUrl like hypertag+sanitize.
+    name: 'hypertag+content',
+    async run(url, html) {
+      const metas = parse(html, 'meta')
+      const links = parse(html, 'link')
+      const prop = v => metas.find(m => (m.property || '').toLowerCase() === v)?.content
+      const name = v => metas.find(m => (m.name || '').toLowerCase() === v)?.content
+      const rel = v => links.find(l => (l.rel || '').toLowerCase() === v)?.href
+      const titleText = parse(html, 'title', {content: true})[0]?.['>']
+
+      // Flatten every JSON-LD block (and its @graph) into one list of objects to pick from.
+      const ld = parse(html, 'script', {content: true})
+        .filter(s => /ld\+json/i.test(s.type ?? ''))
+        .flatMap(s => {
+          try {
+            const json = JSON.parse(s['>'])
+            return Array.isArray(json) ? json : (json['@graph'] ?? [json])
+          } catch {
+            return []
+          }
+        })
+      const ldPick = (...keys) => {
+        for (const obj of ld) {
+          for (const key of keys) {
+            if (obj?.[key] != null) return obj[key]
+          }
+        }
+        return undefined
+      }
+      const asName = x => (Array.isArray(x) ? asName(x[0]) : x && typeof x === 'object' ? x.name : x)
+      const asUrl = x => (Array.isArray(x) ? asUrl(x[0]) : x && typeof x === 'object' ? (x.url ?? x.contentUrl) : x)
+
+      const text = v => (v == null ? null : sanitize(v))
+      const link = v => (v == null ? null : cleanUrl(decode(String(v)), url))
+      return {
+        title: text(prop('og:title') ?? name('twitter:title') ?? ldPick('headline', 'name') ?? titleText),
+        description: text(prop('og:description') ?? name('description') ?? name('twitter:description') ?? ldPick('description')),
+        image: link(prop('og:image') ?? name('twitter:image') ?? asUrl(ldPick('image', 'thumbnailUrl'))),
+        url: link(prop('og:url') ?? rel('canonical') ?? ldPick('url')),
+        author: text(asName(name('author') ?? prop('article:author') ?? ldPick('author'))),
+        date: prop('article:published_time') ?? name('date') ?? ldPick('datePublished', 'dateModified', 'uploadDate') ?? null,
+        publisher: text(asName(prop('og:site_name') ?? ldPick('publisher')))
+      }
+    }
+  },
+
+  {
     // open-graph-scraper, imported lazily so an API mismatch fails only this scraper, not the
     // whole run. It also reads tags (not JS-rendered content), a lighter comparison point.
     name: 'open-graph-scraper',
