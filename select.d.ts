@@ -6,8 +6,9 @@ export = select
  * Compile the CSS-like `selector` and run it against `source`.
  * Equivalent to `select.compile(selector, options)(source)`.
  *
- * `select(html, 'link[rel=alternate]')` returns the same tags as
- * `parse(html, 'link').filter(({rel}) => rel === 'alternate')`.
+ * Attribute name and value matching are case-insensitive by default (so
+ * `meta[property=og:title]` also matches `<meta property="OG:Title">`); append the CSS
+ * Level 4 `s` flag to a clause to force case-sensitive matching (`[href=Logo.PNG s]`).
  */
 declare function select(
   source: string,

@@ -97,6 +97,22 @@ test('curried compile() is reusable across sources', t => {
   t.is(alternates('<link rel="stylesheet">').length, 0)
 })
 
+test('matching is case-insensitive by default (name and value)', t => {
+  const messy = '<META PROPERTY="OG:Title" CONTENT="hi">'
+  t.is(select(messy, 'meta[property=og:title]').length, 1) // value case folds
+  t.is(select(messy, 'meta[PROPERTY=og:title]').length, 1) // name case folds
+  t.is(select(messy, 'meta[property^=OG:]').length, 1) // operators fold too
+  t.is(select('<link rel="Shortcut Icon">', 'link[rel~=icon]').length, 1)
+})
+
+test('the s flag forces case-sensitive matching', t => {
+  const messy = '<meta property="OG:Title" content="hi">'
+  t.is(select(messy, 'meta[property=og:title s]').length, 0) // value now case-sensitive
+  t.is(select(messy, 'meta[property=OG:Title s]').length, 1) // exact case matches
+  // under `s`, the attribute name is case-sensitive too: PROPERTY no longer matches property.
+  t.is(select('<meta PROPERTY="og:title" content="x">', 'meta[property=og:title s]').length, 0)
+})
+
 test('unsupported selectors throw', t => {
   t.throws(() => select(html, 'a > b'), {instanceOf: TypeError})
   t.throws(() => select(html, 'a b'), {instanceOf: TypeError})
@@ -108,8 +124,9 @@ test('unsupported selectors throw', t => {
 
 test('twitter fixture parity with parse().filter()', async t => {
   const text = await readFile(new URL('./fixture-twitter.html', import.meta.url), 'utf-8')
+  // select matches case-insensitively by default, so the equivalent hand filter folds case.
   t.deepEqual(
     select(text, 'link[rel=alternate]'),
-    parse(text, 'link').filter(({rel}) => rel === 'alternate')
+    parse(text, 'link').filter(({rel}) => typeof rel === 'string' && rel.toLowerCase() === 'alternate')
   )
 })

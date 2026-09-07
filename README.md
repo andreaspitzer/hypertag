@@ -184,10 +184,18 @@ attribute clauses, AND-combined: `link[rel=alternate][hreflang]`. Supported oper
 
 Values may be unquoted, single-, or double-quoted; the three are equivalent (`[rel=alternate]`
 ≡ `[rel="alternate"]`). Unquoted values are matched a little more loosely than a strict CSS
-tokenizer would allow (e.g. `[property=og:image]` is accepted without quotes). Matching is
-case-sensitive. Combinators (` `, `>`, `+`), comma groups, and `.class`/`#id` shorthands are
-**not** supported — hypertag builds no tree — and a selector using them throws a `TypeError`
-rather than matching silently.
+tokenizer would allow (e.g. `[property=og:image]` is accepted without quotes).
+
+**Matching is case-insensitive by default** — both the attribute name and the value. That
+mirrors a real HTML pipeline (the parser lowercases attribute names; metascraper matches meta
+values with the CSS `i` flag) and suits messy metadata, so `meta[property=og:title]` also
+catches `<meta property="OG:Title">`. This is a deliberate divergence from CSS, which matches
+values case-sensitively; append the CSS Level 4 **`s` flag** to force case-sensitive matching
+on a clause: `link[href=Logo.PNG s]`.
+
+Combinators (` `, `>`, `+`), comma groups, and `.class`/`#id` shorthands are **not** supported
+— hypertag builds no tree — and a selector using them throws a `TypeError` rather than matching
+silently.
 
 ## 🧼 Sanitize (opt-in)
 
