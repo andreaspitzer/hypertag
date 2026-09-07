@@ -23,6 +23,16 @@ declare namespace select {
      * @default '<'
      */
     tagKey?: string
+    /**
+     * Also capture each element's content, up to its close tag, under `contentKey`.
+     * @default false
+     */
+    content?: boolean
+    /**
+     * Key under which element content is stored when `content` is enabled.
+     * @default '>'
+     */
+    contentKey?: string
   }
 
   /**
@@ -30,6 +40,9 @@ declare namespace select {
    * An attribute value is its string value, or `true` when valueless.
    */
   type Tag = Record<string, string | boolean>
+
+  /** A pre-baked selector: run it against `source`, get the matching tags back. */
+  type Preset = (source: string) => Tag[]
 
   /** Alias of the default export (`require('hypertag/select').select`). */
   function select(source: string, selector: string, options?: ParseOptions): Tag[]
@@ -39,4 +52,21 @@ declare namespace select {
    * `compile('link[rel=alternate]')` is `source => parse(source, 'link').filter(...)`.
    */
   function compile(selector: string, options?: ParseOptions): (source: string) => Tag[]
+
+  /** OpenGraph meta tags: `meta[property^=og:]`. */
+  const og: Preset
+  /** Twitter Card meta tags: `meta[name^=twitter:]`. */
+  const twitter: Preset
+  /** Icon links: `link[rel*=icon]` (icon, shortcut icon, apple-touch-icon, mask-icon). */
+  const icons: Preset
+  /** Canonical link: `link[rel=canonical]`. */
+  const canonical: Preset
+  /** Stylesheet links: `link[rel~=stylesheet]`. */
+  const stylesheets: Preset
+  /** Alternate links (hreflang, feeds): `link[rel~=alternate]`. */
+  const alternates: Preset
+  /** The `<title>` element with its text under the content key (`>`). */
+  const title: Preset
+  /** JSON-LD blocks: `script[type*=ld+json]` with each body under the content key (`>`), ready to JSON.parse. */
+  const jsonld: Preset
 }

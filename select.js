@@ -50,6 +50,22 @@ select.compile = (selector, options) => {
   return source => parse(source, tag, options).filter(predicate)
 }
 
+// Named shortcuts for the selectors people reach for most, each a pre-baked `select` that
+// returns raw `Tag[]` (hypertag hands back tags, not cooked values - you map them yourself).
+// `title` and `jsonld` are content-aware: they turn on the core `content` option, so each
+// result carries the element's content under the `>` key (the JSON-LD text, ready to
+// JSON.parse; a title's raw text, ready to run through hypertag/sanitize's `decode`).
+Object.assign(select, {
+  og: select.compile('meta[property^=og:]'),
+  twitter: select.compile('meta[name^=twitter:]'),
+  icons: select.compile('link[rel*=icon]'),
+  canonical: select.compile('link[rel=canonical]'),
+  stylesheets: select.compile('link[rel~=stylesheet]'),
+  alternates: select.compile('link[rel~=alternate]'),
+  title: select.compile('title', {content: true}),
+  jsonld: select.compile('script[type*=ld+json]', {content: true})
+})
+
 function compile(selector) {
   if (typeof selector !== 'string') {
     throw new TypeError(`hypertag/select: selector must be a string, got ${typeof selector}`)

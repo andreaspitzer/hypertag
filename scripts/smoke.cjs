@@ -24,13 +24,18 @@ assert.deepStrictEqual(
 // with `select` and `compile` attached.
 const select = require('../select.js')
 assert.strictEqual(typeof select, 'function', 'require() default must be the select function')
-for (const name of ['select', 'compile']) {
+for (const name of ['select', 'compile', 'og', 'jsonld']) {
   assert.strictEqual(typeof select[name], 'function', `missing named export: ${name}`)
 }
 assert.deepStrictEqual(
   select('<link rel="alternate" href="/x"><link rel="stylesheet">', 'link[rel=alternate]'),
   [{'<': 'link', rel: 'alternate', href: '/x'}],
   'select() smoke result mismatch'
+)
+assert.strictEqual(
+  select.jsonld('<script type="application/ld+json">{"a":1}</script>')[0]['>'],
+  '{"a":1}',
+  'select.jsonld() preset smoke mismatch'
 )
 
 // The opt-in sanitize layer: require('hypertag/sanitize') is the callable sanitize function

@@ -217,6 +217,33 @@ Combinators (` `, `>`, `+`), comma groups, and `.class`/`#id` shorthands are **n
 — hypertag builds no tree — and a selector using them throws a `TypeError` rather than matching
 silently.
 
+### Presets
+
+Named shortcuts for the selectors you reach for most. Each is a pre-baked `select` that
+returns raw `Tag[]` — hypertag hands back tags, not cooked values, so you map them yourself:
+
+```js
+import {og, icons, canonical, title, jsonld} from 'hypertag/select'
+
+og(html)          // meta[property^=og:]      -> the OpenGraph tags
+icons(html)       // link[rel*=icon]          -> icon, shortcut icon, apple-touch-icon, mask-icon
+canonical(html)   // link[rel=canonical]
+```
+
+`title` and `jsonld` are **content-aware** — they turn on the core `content` option, so each
+result carries the element's content under `>`:
+
+```js
+import {title, jsonld} from 'hypertag/select'
+import {decode} from 'hypertag/sanitize'
+
+decode(title(html)[0]?.['>'])                    // the page title, entities decoded
+jsonld(html).map(s => JSON.parse(s['>']))        // the page's JSON-LD objects
+```
+
+The full set: `og`, `twitter`, `icons`, `canonical`, `stylesheets`, `alternates`, `title`,
+`jsonld` — also reachable as `select.og(html)` etc.
+
 ## 🧼 Sanitize (opt-in)
 
 The core returns attribute values exactly as written, so HTML entities stay encoded

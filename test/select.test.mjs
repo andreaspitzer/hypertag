@@ -122,6 +122,28 @@ test('unsupported selectors throw', t => {
   t.throws(() => compile(42), {instanceOf: TypeError})
 })
 
+test('presets are pre-baked selectors returning raw tags', t => {
+  const page = `
+    <meta property="og:title" content="OG"><meta property="og:image" content="/c.png">
+    <meta name="twitter:card" content="summary">
+    <link rel="canonical" href="/here"><link rel="icon" href="/f.ico">
+    <link rel="apple-touch-icon" href="/t.png"><link rel="stylesheet" href="/a.css">
+    <link rel="alternate" hreflang="de" href="/de">
+  `
+  t.is(select.og(page).length, 2)
+  t.is(select.twitter(page).length, 1)
+  t.is(select.icons(page).length, 2) // icon + apple-touch-icon both contain "icon"
+  t.is(select.canonical(page).length, 1)
+  t.is(select.stylesheets(page).length, 1)
+  t.is(select.alternates(page).length, 1)
+})
+
+test('content-aware presets: title and jsonld carry element content', t => {
+  const page = '<title>My &amp; Page</title><script type="application/ld+json">{"@type":"Article"}</script>'
+  t.is(select.title(page)[0]['>'], 'My &amp; Page') // raw; pair with sanitize.decode
+  t.is(JSON.parse(select.jsonld(page)[0]['>'])['@type'], 'Article')
+})
+
 test('twitter fixture parity with parse().filter()', async t => {
   const text = await readFile(new URL('./fixture-twitter.html', import.meta.url), 'utf-8')
   // select matches case-insensitively by default, so the equivalent hand filter folds case.

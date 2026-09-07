@@ -24,9 +24,14 @@ assert.deepStrictEqual(
 // named exports resolve.
 const selectMod = await import('../select.mjs')
 assert.strictEqual(typeof selectMod.default, 'function', 'import default must be the select function')
-for (const name of ['select', 'compile']) {
+for (const name of ['select', 'compile', 'og', 'jsonld']) {
   assert.strictEqual(typeof selectMod[name], 'function', `missing named export: ${name}`)
 }
+assert.strictEqual(
+  selectMod.jsonld('<script type="application/ld+json">{"a":1}</script>')[0]['>'],
+  '{"a":1}',
+  'select.jsonld() preset smoke mismatch'
+)
 assert.deepStrictEqual(
   selectMod.default('<link rel="alternate" href="/x"><link rel="stylesheet">', 'link[rel=alternate]'),
   [{'<': 'link', rel: 'alternate', href: '/x'}],

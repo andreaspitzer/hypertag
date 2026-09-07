@@ -6,6 +6,16 @@ export interface ParseOptions {
    * @default '<'
    */
   tagKey?: string
+  /**
+   * Also capture each element's content, up to its close tag, under `contentKey`.
+   * @default false
+   */
+  content?: boolean
+  /**
+   * Key under which element content is stored when `content` is enabled.
+   * @default '>'
+   */
+  contentKey?: string
 }
 
 /**
@@ -13,6 +23,9 @@ export interface ParseOptions {
  * An attribute value is its string value, or `true` when valueless.
  */
 export type Tag = Record<string, string | boolean>
+
+/** A pre-baked selector: run it against `source`, get the matching tags back. */
+export type Preset = (source: string) => Tag[]
 
 /**
  * Compile the CSS-like `selector` and run it against `source`.
@@ -37,8 +50,25 @@ export declare function compile(
   options?: ParseOptions
 ): (source: string) => Tag[]
 
+/** OpenGraph meta tags: `meta[property^=og:]`. */
+export declare const og: Preset
+/** Twitter Card meta tags: `meta[name^=twitter:]`. */
+export declare const twitter: Preset
+/** Icon links: `link[rel*=icon]` (icon, shortcut icon, apple-touch-icon, mask-icon). */
+export declare const icons: Preset
+/** Canonical link: `link[rel=canonical]`. */
+export declare const canonical: Preset
+/** Stylesheet links: `link[rel~=stylesheet]`. */
+export declare const stylesheets: Preset
+/** Alternate links (hreflang, feeds): `link[rel~=alternate]`. */
+export declare const alternates: Preset
+/** The `<title>` element with its text under the content key (`>`). */
+export declare const title: Preset
+/** JSON-LD blocks: `script[type*=ld+json]` with each body under the content key (`>`), ready to JSON.parse. */
+export declare const jsonld: Preset
+
 export declare namespace select {
-  export {compile}
+  export {compile, og, twitter, icons, canonical, stylesheets, alternates, title, jsonld}
 }
 
 export default select
