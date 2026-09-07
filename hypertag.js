@@ -1,4 +1,5 @@
-const attrPattern = /([\w\-_]+)\s*(:?=\s*((?:(['"])(.*?)\4)|[^\s>]+))?/ms
+const attrPattern = /([\w\-_]+)(?:\s*:?=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/gims
+const commentPattern = /<!--[\s\S]*?-->/g
 
 module.exports = parse
 Object.assign(module.exports, {
@@ -21,7 +22,7 @@ function parse(source, tags, options) {
     ...options,
   }
 
-  const pattern = new RegExp(`<(?:${tags.join('|')})(?:\\s+(.*?))?>`, 'igms')
+  const pattern = new RegExp(`<(?:${tags.join('|')})(?:\\s+[^>]*)?>`, 'igms')
   return (stripComments(source).match(pattern) || [])
     .map(tag => parseAttrs(tag, options.tagKey))
     .filter(x => x)
@@ -30,26 +31,20 @@ function parse(source, tags, options) {
 function parseAttrs(htmlTagText, tagKey = '<') {
   const attrs = {}
 
-  const matchPattern = new RegExp(attrPattern, 'gims')
-  let match = matchPattern.exec(htmlTagText)
+  attrPattern.lastIndex = 0
+  let match = attrPattern.exec(htmlTagText)
   if (!match) {
     return
   }
   attrs[tagKey] = match[1]
 
-  while ((match = matchPattern.exec(htmlTagText)) !== null) {
+  while ((match = attrPattern.exec(htmlTagText)) !== null) {
     const key = match[1]
-    attrs[key]
-    = match[5] !== undefined
-        ? match[5]
-        : (match[3] !== undefined
-          ? match[3]
-          : true)
+    attrs[key] = match[2] ?? match[3] ?? match[4] ?? true
   }
   return attrs
 }
 
 function stripComments(html) {
-  // eslint-disable-next-line unicorn/better-regex
-  return html.replace(/<!--[\s\S]*?(?:-->)/gms, '')
+  return html.indexOf('<!--') === -1 ? html : html.replace(commentPattern, '')
 }
