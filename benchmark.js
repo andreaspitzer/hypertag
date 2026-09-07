@@ -10,11 +10,10 @@ let html = `
 `
 
 const Benchmark = require('benchmark')
-const got = require('got')
 const htmlTagParser = require('html-tag-parser')
 const cheerio = require('cheerio')
 const htmlparser2 = require('htmlparser2')
-const htmlParseStringify2 = require('html-parse-stringify2')
+const htmlParseStringify = require('html-parse-stringify')
 const fastHtml = require('fast-html')
 const parse5 = require('parse5')
 const hypertag = require('./hypertag.js')
@@ -37,8 +36,8 @@ const suite = (new Benchmark.Suite())
   .add('cheerio', () => {
     cheerio.load(html)('meta')
   })
-  .add('html-parse-stringify2', () => {
-    htmlParseStringify2.parse(html)
+  .add('html-parse-stringify', () => {
+    htmlParseStringify.parse(html)
   })
   .on('cycle', event => {
     console.log(String(event.target))
@@ -47,7 +46,9 @@ const suite = (new Benchmark.Suite())
     console.log('Fastest is ' + this.filter('fastest').map('name'))
   })
 
-got('https://apple.com/').then(result => {
-  html = result.body
-  suite.run({async: true})
-})
+fetch('https://apple.com/')
+  .then(response => response.text())
+  .then(body => {
+    html = body
+    suite.run({async: true})
+  })

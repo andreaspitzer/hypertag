@@ -1,6 +1,7 @@
-const test = require('ava')
-const parseTags = require('../hypertag.js')
-const {stripComments, parseAttrs} = require('../hypertag.js')
+import test from 'ava'
+import parseTags from '../hypertag.js'
+
+const {stripComments, parseAttrs} = parseTags
 
 test('full HTML', t => {
   const result = parseTags(`

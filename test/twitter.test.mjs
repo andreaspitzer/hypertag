@@ -1,10 +1,9 @@
-const {readFile} = require('node:fs/promises')
-const {resolve} = require('node:path')
-const test = require('ava')
-const parse = require('../hypertag.js')
+import {readFile} from 'node:fs/promises'
+import test from 'ava'
+import parse from '../hypertag.js'
 
 test('correctly parses relevant tags from twitter.com', async t => {
-  const text = await readFile(resolve(__dirname, './fixture-twitter.html'), 'utf-8')
+  const text = await readFile(new URL('./fixture-twitter.html', import.meta.url), 'utf-8')
   const tags = parse(text, 'link')
 
   const hreflangs = 'x-default en ar ar-x-fm bg bn ca cs da de el en-GB es eu fa fi fr ga gl gu he hi hr hu id it ja kn ko mr ms nb nl pl pt ro ro sk sr sv ta th tr uk ur vi zh zh-Hant'.split(/\s+/)

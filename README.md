@@ -84,7 +84,7 @@ The question this benchmark aims to answer is
 
 > How fast can I find tags of interest in an HTML string?
 
-Most of the tested parsers come with many more features and allow you to do more complex queries than hypertag; for example, parse5 and cheerio create a whole DOM, and similarly html-parse-stringify2 creates an AST. html-tag-parser parses tags but not attributes.
+Most of the tested parsers come with many more features and allow you to do more complex queries than hypertag; for example, parse5 and cheerio create a whole DOM, and similarly html-parse-stringify creates an AST. html-tag-parser parses tags but not attributes.
 
 One objection could be that this is an unfair test, since the parsers are just too different. This can be rebutted by the fact that one ought to pick the right tool for the job: a sports car is faster than a truck, but the truck can load more freight. Do you need a fast and simple parser to find a few tags or do you want to manipulate a DOM?
 
@@ -98,7 +98,7 @@ parse5 x 323 ops/sec ±1.68% (83 runs sampled)
 htmlparser2 x 1,079 ops/sec ±0.87% (88 runs sampled)
 html-tag-parser x 1,482 ops/sec ±0.71% (91 runs sampled)
 cheerio x 182 ops/sec ±5.20% (70 runs sampled)
-html-parse-stringify2 x 499 ops/sec ±1.07% (87 runs sampled)
+html-parse-stringify x 499 ops/sec ±1.07% (87 runs sampled)
 Fastest is hypertag
 ```
 
