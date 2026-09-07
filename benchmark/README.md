@@ -17,6 +17,7 @@ npm run bench:size
 npm run bench:memory
 npm run bench:select   # the hypertag/select layer vs a hand-written parse().filter()
 npm run bench:og       # hypertag + select vs metascraper, on OpenGraph extraction
+npm run bench:unified  # the reverse: metascraper's home turf (unified metadata + fallbacks)
 ```
 
 ## The task
@@ -146,3 +147,28 @@ bundle, which is exactly where hypertag is meant to run. If you need metascraper
 JSON-LD, oEmbed and URL resolution, that is a different and larger job — reach for it. If you
 already have the HTML and want the OpenGraph tags out of it, hypertag does that slice for a
 rounding error of the cost.
+
+### The reverse: metascraper's home turf (`bench:unified`)
+
+To be fair to metascraper, `unified-vs-metascraper.mjs` runs the job it is actually built
+for: resolve unified `{title, description, image, url}` on a **messy** page
+(`fixture-og-fallback.html`) where every field hides somewhere different - title only in the
+`<title>` element text, description only in `<meta name="description">`, a **relative**
+`og:image` that must be resolved to absolute, and the URL only in `<link rel="canonical">`.
+
+To compete, hypertag needs a hand-written rule layer (the fallback order + `new URL()`
+resolution, ~15 lines). The result is a coverage story, not a speed race:
+
+| field | metascraper | hypertag + rule layer |
+| --- | --- | --- |
+| title | ✅ from `<title>` text | ❌ **unreachable** - hypertag reads attributes, not element text |
+| description | ✅ | ✅ via fallback to `name=description` |
+| image | ✅ resolved to absolute | ✅ resolved with `new URL()` |
+| url | ✅ from canonical | ✅ from canonical |
+
+hypertag matches **3 of 4**, and on those three it is still ~85x faster and ships 115 fewer
+packages. The one it misses - `title` - is the point: metadata that lives in element **text**
+(the `<title>` body, JSON-LD inside a `<script>`, a visible `<h1>`) is structurally out of
+hypertag's reach, because it only reads tag attributes. That is the boundary. Inside it,
+hypertag wins on every axis; across it, you need a real parser, and metascraper's weight is
+what buys you the crossing.
