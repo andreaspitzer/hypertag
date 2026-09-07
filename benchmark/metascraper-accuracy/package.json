@@ -5,7 +5,9 @@
   "type": "module",
   "description": "Adapted from metascraper's own accuracy benchmark (github.com/microlinkhq/metascraper/tree/master/benchmark): fetch real pages, run each scraper, normalize to a common shape, compare. Adds hypertag; refreshed URLs; requires network.",
   "scripts": {
-    "start": "node index.mjs"
+    "start": "node index.mjs",
+    "offline": "node index-offline.mjs",
+    "perf": "node perf.mjs"
   },
   "dependencies": {
     "hypertag": "file:../..",

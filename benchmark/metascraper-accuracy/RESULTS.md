@@ -77,6 +77,28 @@ much richer set of author heuristics; our small rule layer finds it in JSON-LD o
 that is rule-layer sophistication and date normalization, not a hypertag capability limit. The
 capability - reading element text and JSON-LD - is now present.
 
+## Performance (`node perf.mjs`)
+
+Throughput over the six captured pages (~3.5 MB total), pages turned into the normalized
+object per second. Absolute numbers vary by machine; the ratios are the point.
+
+| scraper | pages/sec | vs metascraper |
+| --- | ---: | ---: |
+| hypertag + sanitize | ~490 | ~35x faster |
+| hypertag (raw) | ~470 | ~34x faster |
+| hypertag + sanitize + `{content: true}` | ~400 | **~29x faster** |
+| open-graph-scraper | ~6 | ~2x slower |
+| metascraper | ~14 | - |
+
+The accuracy work is essentially free: the full pipeline that reaches 30/42 - parse + select +
+sanitize + `content` + JSON-LD `JSON.parse` - still runs ~29x faster than metascraper. The
+`content` variant is ~15% slower than raw hypertag (the extra content passes and JSON parsing);
+raw vs sanitize is within measurement noise.
+
+Speed is only one axis. From the other benchmarks (same libraries, unchanged): the hypertag
+pipeline is the **zero-dependency** package (core + `hypertag/sanitize`) versus metascraper's
+**115 packages / ~48 MB**; cold start is **~10 ms vs ~440 ms**; peak memory **~48 MB vs ~130 MB**.
+
 ## Takeaway
 
 open-graph-scraper reads element text but not JSON-LD, so it plateaus at author/date = 0.
