@@ -7,6 +7,7 @@
   "scripts": {
     "bench": "node speed.mjs && node size.mjs && node memory.mjs",
     "bench:select": "node select-vs-parse.mjs",
+    "bench:og": "node og-vs-metascraper.mjs",
     "bench:speed": "node speed.mjs",
     "bench:size": "node size.mjs",
     "bench:memory": "node memory.mjs"
@@ -20,6 +21,11 @@
     "htmlparser2": "^12.0.0",
     "jsdom": "^25.0.0",
     "linkedom": "^0.18.13",
+    "metascraper": "^5.46.11",
+    "metascraper-description": "^5.46.11",
+    "metascraper-image": "^5.46.11",
+    "metascraper-title": "^5.46.11",
+    "metascraper-url": "^5.46.11",
     "node-html-parser": "^7.0.0",
     "parse5": "^8.0.1"
   }

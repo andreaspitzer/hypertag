@@ -15,6 +15,8 @@ npm run bench          # speed, then size, then memory
 npm run bench:speed
 npm run bench:size
 npm run bench:memory
+npm run bench:select   # the hypertag/select layer vs a hand-written parse().filter()
+npm run bench:og       # hypertag + select vs metascraper, on OpenGraph extraction
 ```
 
 ## The task
@@ -111,3 +113,36 @@ capable (selectors, traversal, text content, mutation, spec-correct nesting),
 and most parsers here run at the edge too: jsdom cannot (it needs Node's `vm`,
 `fs`, and `http`), and cheerio needs a Node-compat flag for `fs`; the other six
 are pure JS. They just cost more to ship and run. Pick the tool for the job.
+
+## OpenGraph extraction vs metascraper (`bench:og`)
+
+A separate, focused comparison against [metascraper](https://github.com/microlinkhq/metascraper),
+the heavyweight unified-metadata scraper. **These are not the same kind of tool.** metascraper
+returns cooked, unified values after running priority rules across OpenGraph, Twitter Cards,
+JSON-LD and HTML, with URL normalization; hypertag returns raw tags and the benchmark maps
+`og:X → X` itself. metascraper is doing more work by design, so this measures only the narrow
+slice both can do on identical input.
+
+The task, defined in `og-vs-metascraper.mjs`: from a fixed local page
+(`fixture-og.html`, ~46 kB, authored with clean absolute URLs so both resolve identically),
+produce `{title, description, image, url}` from the page's `og:` tags.
+
+- **hypertag:** `select(html, 'meta[property^=og:]')`, then map to the four fields. Zero-dep, sync.
+- **metascraper:** `metascraper([title, description, image, url])({html, url})`. Async.
+
+A correctness gate asserts both return the identical object, field by field, before any number
+is reported. Four dimensions:
+
+| dimension | hypertag + select | metascraper |
+| --- | ---: | ---: |
+| speed (ops/sec) | ~36,000 | ~230 (≈150x slower) |
+| cold start (load + first result) | ~10 ms | ~440 ms |
+| memory (peak RSS) | ~48 MB | ~130 MB |
+| install footprint | 1 package, ~22 kB | 115 packages, ~48 MB |
+
+Absolute numbers vary by machine and metascraper version; the ratios are the point. The
+footprint is the sharpest line: metascraper's 115-package tree is why it does not fit an edge
+bundle, which is exactly where hypertag is meant to run. If you need metascraper's fallbacks,
+JSON-LD, oEmbed and URL resolution, that is a different and larger job — reach for it. If you
+already have the HTML and want the OpenGraph tags out of it, hypertag does that slice for a
+rounding error of the cost.
