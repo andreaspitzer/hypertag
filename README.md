@@ -144,9 +144,56 @@ const icons = parse(html, 'link')
 console.log(icons)
 ```
 
+## 🎯 Selectors (opt-in)
+
+The core stays selector-free. If you want CSS-like sugar, import the separate
+`hypertag/select` entry: it compiles a single-tag selector into exactly the `parse` +
+`.filter()` you would have written by hand, and nothing more (no tree, no DOM, no combinators).
+
+```js
+import select from 'hypertag/select'          // ESM
+// const select = require('hypertag/select')  // CommonJS
+
+select(html, 'link[rel=alternate]')
+// ≡ parse(html, 'link').filter(({rel}) => rel === 'alternate')
+```
+
+Compile once and reuse across many documents (mirrors `extend`):
+
+```js
+import {compile} from 'hypertag/select'
+
+const alternates = compile('link[rel=alternate]')  // source => Tag[]
+alternates(htmlA)
+alternates(htmlB)
+```
+
+A selector is a tag name (`link`, `*`, or omitted = `*`) followed by any number of
+attribute clauses, AND-combined: `link[rel=alternate][hreflang]`. Supported operators:
+
+| clause | matches |
+| --- | --- |
+| `[attr]` | attribute is present (valueless or empty counts) |
+| `[attr=v]` | value equals `v` |
+| `[attr!=v]` | value differs from `v`, or the attribute is absent |
+| `[attr^=v]` | value starts with `v` |
+| `[attr$=v]` | value ends with `v` |
+| `[attr*=v]` | value contains `v` |
+| `[attr~=v]` | `v` is one of the whitespace-separated words in the value |
+| `[attr\|=v]` | value equals `v` or starts with `v-` (e.g. `en` matches `en-GB`) |
+
+Values may be unquoted, single-, or double-quoted; the three are equivalent (`[rel=alternate]`
+≡ `[rel="alternate"]`). Unquoted values are matched a little more loosely than a strict CSS
+tokenizer would allow (e.g. `[property=og:image]` is accepted without quotes). Matching is
+case-sensitive. Combinators (` `, `>`, `+`), comma groups, and `.class`/`#id` shorthands are
+**not** supported — hypertag builds no tree — and a selector using them throws a `TypeError`
+rather than matching silently.
+
 ## 🚫 When not to reach for hypertag
 
-hypertag is an extraction primitive, not a full parser. It has no CSS selectors, no DOM traversal, and it does not repair malformed or badly nested HTML the way a spec parser does. It does not fetch URLs; you hand it an HTML string you already have. And it is not a metadata ruleset: it returns the raw `<meta>` and `<link>` tags, not the JSON-LD, Twitter Card, and oEmbed fallbacks that tools like metascraper layer on top. If you need any of those, reach for cheerio, jsdom, or metascraper.
+hypertag is an extraction primitive, not a full parser. Its core has no CSS selectors (the
+opt-in `hypertag/select` layer above only sugars single-tag attribute filtering), no DOM
+traversal, and it does not repair malformed or badly nested HTML the way a spec parser does. It does not fetch URLs; you hand it an HTML string you already have. And it is not a metadata ruleset: it returns the raw `<meta>` and `<link>` tags, not the JSON-LD, Twitter Card, and oEmbed fallbacks that tools like metascraper layer on top. If you need any of those, reach for cheerio, jsdom, or metascraper.
 
 # Benchmarks 🍏🍊
 

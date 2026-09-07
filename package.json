@@ -36,6 +36,16 @@
         "default": "./hypertag.js"
       }
     },
+    "./select": {
+      "import": {
+        "types": "./select.d.mts",
+        "default": "./select.mjs"
+      },
+      "require": {
+        "types": "./select.d.ts",
+        "default": "./select.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -43,7 +53,11 @@
     "hypertag.js",
     "hypertag.mjs",
     "index.d.ts",
-    "index.d.mts"
+    "index.d.mts",
+    "select.js",
+    "select.mjs",
+    "select.d.ts",
+    "select.d.mts"
   ],
   "engines": {
     "node": ">=18"

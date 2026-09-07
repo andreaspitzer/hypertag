@@ -15,4 +15,17 @@ assert.deepStrictEqual(
 )
 assert.strictEqual(parse.stripComments('a<!--b-->c'), 'ac', 'stripComments() smoke mismatch')
 
+// The opt-in selector layer: require('hypertag/select') is the callable select function
+// with `select` and `compile` attached.
+const select = require('../select.js')
+assert.strictEqual(typeof select, 'function', 'require() default must be the select function')
+for (const name of ['select', 'compile']) {
+  assert.strictEqual(typeof select[name], 'function', `missing named export: ${name}`)
+}
+assert.deepStrictEqual(
+  select('<link rel="alternate" href="/x"><link rel="stylesheet">', 'link[rel=alternate]'),
+  [{'<': 'link', rel: 'alternate', href: '/x'}],
+  'select() smoke result mismatch'
+)
+
 console.log('smoke: CJS require() OK')

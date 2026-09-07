@@ -15,4 +15,17 @@ assert.deepStrictEqual(
 )
 assert.strictEqual(stripComments('a<!--b-->c'), 'ac', 'stripComments() smoke mismatch')
 
+// The opt-in selector layer: the default import is the callable select function, and the
+// named exports resolve.
+const selectMod = await import('../select.mjs')
+assert.strictEqual(typeof selectMod.default, 'function', 'import default must be the select function')
+for (const name of ['select', 'compile']) {
+  assert.strictEqual(typeof selectMod[name], 'function', `missing named export: ${name}`)
+}
+assert.deepStrictEqual(
+  selectMod.default('<link rel="alternate" href="/x"><link rel="stylesheet">', 'link[rel=alternate]'),
+  [{'<': 'link', rel: 'alternate', href: '/x'}],
+  'select() smoke result mismatch'
+)
+
 console.log('smoke: ESM import OK')
