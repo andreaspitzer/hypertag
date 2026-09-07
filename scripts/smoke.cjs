@@ -1,9 +1,9 @@
-// Smoke test the *built* package: catches a broken exports map or a
-// mis-emitted dist artifact that the source-level unit tests never load.
+// Smoke the CommonJS entry as a consumer sees it: `require('hypertag')` must
+// be the callable parse function with the named helpers attached.
 const assert = require('node:assert')
-const parse = require('../dist/index.js')
+const parse = require('../hypertag.js')
 
-assert.strictEqual(typeof parse, 'function', 'default export must be the parse function')
+assert.strictEqual(typeof parse, 'function', 'require() default must be the parse function')
 for (const name of ['parse', 'parseAttrs', 'stripComments', 'extend']) {
   assert.strictEqual(typeof parse[name], 'function', `missing named export: ${name}`)
 }
@@ -15,4 +15,4 @@ assert.deepStrictEqual(
 )
 assert.strictEqual(parse.stripComments('a<!--b-->c'), 'ac', 'stripComments() smoke mismatch')
 
-console.log('smoke: built dist CJS exports OK')
+console.log('smoke: CJS require() OK')

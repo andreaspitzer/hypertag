@@ -6,7 +6,7 @@
 
 ## ✨ Features
   + ✅  **Hyperfast.** 50 × faster than cheerio, 30 × parse5, 10 × htmlparser2.
-  + ✅  **Tiny.** < 500 bytes gzipped.
+  + ✅  **Tiny.** < 700 bytes gzipped.
   + ✅  **Complete** Zero dependencies.
   + ✅  **Robust.** 100% Code Coverage. [![ci-badge]][ci-link]
 

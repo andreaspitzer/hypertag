@@ -18,33 +18,40 @@
   "author": "Andreas Pitzer <hopster@gmail.com> (https://github.com/andreaspitzer)",
   "repository": "andreaspitzer/hypertag",
   "license": "MIT",
-  "source": "hypertag.js",
-  "types": "index.d.ts",
+  "type": "commonjs",
+  "types": "./index.d.ts",
+  "main": "./hypertag.js",
+  "module": "./hypertag.mjs",
   "exports": {
     ".": {
-      "types": "./index.d.ts",
-      "require": "./dist/index.js",
-      "default": "./dist/index.js"
+      "import": {
+        "types": "./index.d.mts",
+        "default": "./hypertag.mjs"
+      },
+      "require": {
+        "types": "./index.d.ts",
+        "default": "./hypertag.js"
+      }
     },
     "./package.json": "./package.json"
   },
-  "main": "dist/index.js",
   "sideEffects": false,
   "files": [
-    "dist",
-    "index.d.ts"
+    "hypertag.js",
+    "hypertag.mjs",
+    "index.d.ts",
+    "index.d.mts"
   ],
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "build": "rimraf dist && microbundle -f cjs",
     "test": "c8 ava",
     "pretest": "npm run lint",
     "lint": "biome lint",
     "format": "biome format --write",
-    "smoke": "node scripts/smoke.cjs",
-    "prepublishOnly": "npm test && npm run build && npm run smoke",
+    "smoke": "node scripts/smoke.cjs && node scripts/smoke.mjs",
+    "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"
   },
@@ -62,9 +69,7 @@
     "html-tag-parser": "^1.0.0",
     "htmlparser2": "^12.0.0",
     "husky": "^9.1.7",
-    "microbundle": "^0.15.1",
-    "parse5": "^8.0.1",
-    "rimraf": "^6.1.3"
+    "parse5": "^8.0.1"
   },
   "commitlint": {
     "extends": [
@@ -73,7 +78,7 @@
   },
   "commit-and-tag-version": {
     "scripts": {
-      "prerelease": "npm test && npm run build"
+      "prerelease": "npm test"
     }
   }
 }
