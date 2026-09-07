@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.0](https://github.com/andreaspitzer/hypertag/compare/v0.0.6...v0.1.0) (2026-09-07)
+
+
+### Features
+
+* ship dual CommonJS + ESM and drop the bundler ([4fd7fe1](https://github.com/andreaspitzer/hypertag/commit/4fd7fe162626c3008e664eefd9c0976c005df1dd))
+
+
+### Performance Improvements
+
+* remove regex backtracking, 4.7x faster tag extraction ([72f25af](https://github.com/andreaspitzer/hypertag/commit/72f25afa2bb74b0689608a69eddeccd3489d33bd))
+
 ### [0.0.6](https://github.com/andreaspitzer/hypertag/compare/v0.0.5...v0.0.6) (2022-03-17)
 
 
