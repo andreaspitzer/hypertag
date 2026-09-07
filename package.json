@@ -1,6 +1,6 @@
 {
   "name": "hypertag",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "Tiny zero-dependency HTML parser: read tag attributes from an HTML string with a getElementsByTagName that needs no DOM. Runs on Node, Deno, Bun and the edge.",
   "keywords": [
     "html-parser",
