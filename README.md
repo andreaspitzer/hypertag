@@ -10,8 +10,17 @@
   + ✅  **Complete** Zero dependencies.
   + ✅  **Robust.** 100% Code Coverage. [![ci-badge]][ci-link]
 
+## 📦 Install
+
+```sh
+npm install hypertag
+```
+
 ## 💻 Use
 ```js
+import parse from 'hypertag'          // ESM
+// const parse = require('hypertag')  // CommonJS
+
 const html = `
   <html><head>
     <meta name="hello" content="world">
@@ -21,7 +30,7 @@ const html = `
   </body></html>
 `
 
-const result = parseHtmlTags(html, 'meta')
+const result = parse(html, 'meta')
 console.log(result)
 
 [
@@ -43,8 +52,8 @@ console.log(result)
 #### Getting Favicons
 
 ```js
-const result = parseHtmlTags(html, 'link')
-  .filter(({rel}) => /^(shortcut\s+)?icon/i.test(rel))
+const result = parse(html, 'link')
+  .filter(({rel}) => /^(shortcut\s+)?icon/i.test(rel ?? ''))
 
 [
   {
@@ -59,8 +68,8 @@ const result = parseHtmlTags(html, 'link')
 
 #### Getting OpenGraph Images
 ```js
-const result = parseHtmlTags(html, 'meta')
-  .filter(({property}) => property.toLowerCase() === 'og:image')
+const result = parse(html, 'meta')
+  .filter(({property}) => property?.toLowerCase() === 'og:image')
 
 [
   {
@@ -69,6 +78,69 @@ const result = parseHtmlTags(html, 'meta')
     content: 'http://static01.nyt.com/images/2015/02/19/arts/international/19iht-btnumbers19A/19iht-btnumbers19A-facebookJumbo-v2.jpg'
   }
 ]
+```
+
+## 🧩 Recipes — modern runtimes
+
+Because hypertag is zero-dependency, tiny, and needs no DOM, it runs anywhere JavaScript does — including edge runtimes where `cheerio`/`jsdom` won't fit. Examples use the ESM `import`; swap for `const parse = require('hypertag')` under CommonJS.
+
+#### Cloudflare Workers / Vercel Edge — link-preview metadata
+
+```js
+import parse from 'hypertag'
+
+export default {
+  async fetch(request) {
+    const target = new URL(request.url).searchParams.get('url')
+    const html = await fetch(target).then(res => res.text())
+
+    const og = Object.fromEntries(
+      parse(html, 'meta')
+        .filter(m => m.property?.startsWith('og:'))
+        .map(m => [m.property.slice(3), m.content])
+    )
+
+    return Response.json(og) // { title, image, description, ... }
+  }
+}
+```
+
+No `nodejs_compat`, no bundler, no polyfill — hypertag is a single dependency-free module.
+
+#### Next.js — Route Handler (App Router)
+
+```js
+// app/api/preview/route.js
+import parse from 'hypertag'
+
+export const runtime = 'edge' // optional; runs on Node too
+
+export async function GET(request) {
+  const url = new URL(request.url).searchParams.get('url')
+  const html = await fetch(url).then(res => res.text())
+
+  const meta = parse(html, 'meta')
+  const pick = key => meta.find(m => m.name === key || m.property === key)?.content
+
+  return Response.json({
+    title: pick('og:title'),
+    description: pick('description') ?? pick('og:description'),
+    image: pick('og:image')
+  })
+}
+```
+
+#### Deno / Bun — favicon discovery
+
+```js
+import parse from 'npm:hypertag' // Deno; on Bun: import parse from 'hypertag'
+
+const html = await fetch('https://example.com').then(res => res.text())
+
+const icons = parse(html, 'link')
+  .filter(({rel}) => /\bicon\b/i.test(rel ?? ''))
+
+console.log(icons)
 ```
 
 # Benchmarks 🍏🍊
