@@ -1,0 +1,43 @@
+name: Release
+
+# On every push to master, release-please maintains a release pull request that
+# computes the next version and CHANGELOG from the conventional commits since the
+# last release. Merging that PR tags the release and publishes it to npm.
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC for npm Trusted Publishing (provenance is automatic)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      # Trusted Publishing authenticates over OIDC with no token, but needs a
+      # recent npm (>= 11.5.1); node ships an older npm, so upgrade it first.
+      - run: npm install -g npm@latest
+      - run: npm ci
+      # npm publish runs prepublishOnly (npm test && npm run smoke) as the gate.
+      - run: npm publish
