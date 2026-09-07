@@ -2,7 +2,7 @@
 
 > **The smallest, fastest HTML parser that skips the DOM.**
 
-🏎️ **hypertag** parses an HTML string and returns the tag attributes you ask for as plain objects: a `getElementsByTagName` that needs no DOM. Zero dependencies, about 0.8 kB, and in the benchmark below the fastest and smallest way to pull `<meta>`, `<link>`, and other tags out of HTML. Runs on Node, Deno, Bun, and the edge.
+**hypertag** parses an HTML string and returns the tag attributes you ask for as plain objects: a `getElementsByTagName` that needs no DOM. Zero dependencies, about 0.8 kB, and in the benchmark below the fastest and smallest way to pull `<meta>`, `<link>`, and other tags out of HTML. Runs on Node, Deno, Bun, and the edge.
 
 ## ✨ Features
   + ✅  **Tiny.** ~0.8 kB bundled, 35x smaller than htmlparser2 and ~1000x smaller than jsdom, so it barely touches an edge bundle.
