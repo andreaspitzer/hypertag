@@ -20,6 +20,15 @@ const benchDir = path.dirname(fileURLToPath(import.meta.url))
 const html = readFileSync(new URL('./fixture-og-fallback.html', import.meta.url), 'utf8')
 const PAGE_URL = 'https://example.com/blog/messy-metadata-fallbacks'
 const FIELDS = ['title', 'description', 'image', 'url']
+
+// The intended, correct value of each field on the fixture - the accuracy oracle. Both tools
+// are scored against this, so metascraper can be wrong too (it is not the reference here).
+const GROUND_TRUTH = {
+  title: 'Messy Metadata: Title Only In The Title Element', // only in <title> element text
+  description: 'Fallbacks & edge cases: title, image & URL each hide elsewhere', // decoded from &amp;
+  image: 'https://example.com/assets/cover.png', // resolved from a relative og:image
+  url: 'https://example.com/blog/messy-metadata-fallbacks' // only in <link rel="canonical">
+}
 let sink = 0
 const median = xs => xs.slice().sort((a, b) => a - b)[xs.length >> 1]
 const fmt = n => Math.round(n).toLocaleString().padStart(10)
@@ -68,19 +77,38 @@ const metascraper = await makeMetascraper()
 const ht = hypertag()
 const ms = await metascraper()
 
-// Coverage: this is the headline. Show what each resolves, and where they agree.
-console.log('coverage (does each tool resolve the field, and do they agree?):')
-console.log(`  ${'field'.padEnd(12)} ${'metascraper'.padEnd(52)} ${'hypertag'.padEnd(52)} match`)
-let matches = 0
-for (const f of FIELDS) {
-  const same = ht[f] === ms[f]
-  if (same) matches++
-  const clip = s => (s == null ? '(none)' : String(s)).slice(0, 50)
-  console.log(`  ${f.padEnd(12)} ${clip(ms[f]).padEnd(52)} ${clip(ht[f]).padEnd(52)} ${same ? 'yes' : 'NO'}`)
+// Accuracy against ground truth - the headline. Each field is one of:
+//   correct   - value equals the intended value
+//   incorrect - a value was produced, but it is wrong (e.g. an undecoded HTML entity)
+//   missed    - nothing was produced
+// Scoring both tools this way lets metascraper be wrong too, rather than treating it as the oracle.
+const tools = {metascraper: ms, hypertag: ht}
+const classify = (value, expected) => (value == null ? 'missed' : value === expected ? 'correct' : 'incorrect')
+const tally = {
+  metascraper: {correct: 0, incorrect: 0, missed: 0},
+  hypertag: {correct: 0, incorrect: 0, missed: 0}
 }
-console.log(`\n  hypertag matches metascraper on ${matches}/${FIELDS.length} fields.`)
-console.log('  The miss is `title`: it lives in the <title> element text, and hypertag reads')
-console.log('  attributes, not text - so it is structurally unreachable, not just harder.\n')
+
+console.log('accuracy vs ground truth (correct / incorrect / missed), per field:')
+console.log(`  ${'field'.padEnd(12)} ${'metascraper'.padEnd(12)} hypertag`)
+for (const f of FIELDS) {
+  const status = {}
+  for (const [name, out] of Object.entries(tools)) {
+    status[name] = classify(out[f], GROUND_TRUTH[f])
+    tally[name][status[name]]++
+  }
+  console.log(`  ${f.padEnd(12)} ${status.metascraper.padEnd(12)} ${status.hypertag}`)
+}
+console.log()
+for (const [name, t] of Object.entries(tally)) {
+  console.log(`  ${name.padEnd(12)} ${t.correct} correct, ${t.incorrect} incorrect, ${t.missed} missed`)
+}
+console.log()
+console.log('  hypertag `title` is MISSED: it lives in the <title> element text, which hypertag')
+console.log('  cannot read (attributes only) - structurally out of reach, not just harder.')
+console.log('  hypertag `description` is INCORRECT: the raw attribute holds "&amp;" and hypertag')
+console.log('  returns it literally, while metascraper decodes HTML entities (via cheerio).')
+console.log('  Both are jobs the minimal hand-written rule layer does not do for you.\n')
 
 await speed()
 footprint()
