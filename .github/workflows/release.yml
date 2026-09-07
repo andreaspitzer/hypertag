@@ -3,10 +3,16 @@ name: Release
 # On every push to master, release-please maintains a release pull request that
 # computes the next version and CHANGELOG from the conventional commits since the
 # last release. Merging that PR tags the release and publishes it to npm.
+#
+# workflow_dispatch is a manual escape hatch: it publishes the current master
+# (whatever version is in package.json) even when release-please has already cut
+# the release. Use it to recover a release whose publish step failed, since a
+# re-run of the push event skips publish (release_created is false the second time).
 on:
   push:
     branches:
       - master
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -25,7 +31,7 @@ jobs:
 
   publish:
     needs: release-please
-    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    if: ${{ needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
