@@ -6,6 +6,19 @@ export interface ParseOptions {
    * @default '<'
    */
   tagKey?: string
+  /**
+   * Also capture each element's content, up to its matching close tag, under `contentKey`.
+   * Reliable for raw-text (`script`, `style`) and escapable-raw-text (`title`, `textarea`)
+   * elements; best-effort (first close tag) for elements that can nest. Unclosed elements are
+   * skipped. Runs on the raw source, so commented-out elements may be matched.
+   * @default false
+   */
+  content?: boolean
+  /**
+   * Key under which element content is stored when `content` is enabled.
+   * @default '>'
+   */
+  contentKey?: string
 }
 
 /**

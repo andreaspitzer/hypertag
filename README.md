@@ -81,6 +81,26 @@ const result = parse(html, 'meta')
 ]
 ```
 
+#### Getting element content (title, JSON-LD)
+
+Attributes aren't everything - the page title and JSON-LD live *between* the tags. Pass
+`{content: true}` and each result gains a `>` key with the element's content:
+
+```js
+parse(html, 'title', {content: true})[0]['>']       // 'HTTP | MDN'
+
+parse(html, 'script', {content: true})
+  .filter(s => /ld\+json/i.test(s.type ?? ''))
+  .map(s => JSON.parse(s['>']))                       // the page's JSON-LD objects
+```
+
+Content capture is reliable for HTML raw-text (`script`, `style`) and escapable-raw-text
+(`title`, `textarea`) elements - the ones that actually carry metadata. For elements that can
+nest (`div`, `p`, …) it is best-effort and stops at the first close tag; an unclosed element is
+skipped rather than throwing or hanging. Content comes back raw - pair it with
+`hypertag/sanitize`'s `decode` for a `<title>`'s entities. (For arbitrary element text and
+traversal, reach for cheerio.)
+
 ## 🧩 Recipes for modern runtimes
 
 Because hypertag is zero-dependency, tiny, and needs no DOM, it runs anywhere JavaScript does, including edge runtimes where `cheerio`/`jsdom` won't fit. Examples use the ESM `import`; swap for `const parse = require('hypertag')` under CommonJS.

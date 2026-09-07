@@ -19,13 +19,37 @@ function parse(source, tags, options) {
   tags = tags.map(tag => tag === '*' ? '[^/\\s>]+' : tag)
   options = {
     tagKey: '<',
+    contentKey: '>',
     ...options,
+  }
+
+  if (options.content) {
+    return parseWithContent(source, tags, options)
   }
 
   const pattern = new RegExp(`<(?:${tags.join('|')})(?:\\s+[^>]*)?>`, 'igms')
   return (stripComments(source).match(pattern) || [])
     .map(tag => parseAttrs(tag, options.tagKey))
     .filter(x => x)
+}
+
+// Also capture each element's content, up to its matching close tag (a backreference to the
+// opened tag name, case-insensitive). Correct for HTML raw-text (script, style) and escapable
+// raw-text (title, textarea) elements; for elements that can nest it is best-effort and stops
+// at the first close tag. Runs on the RAW source (not comment-stripped) so raw-text content -
+// e.g. a JSON-LD `<script>` body - is preserved verbatim. An unclosed element simply does not
+// match, so malformed input yields fewer results rather than throwing or hanging.
+function parseWithContent(source, tags, options) {
+  const pattern = new RegExp(`(<(${tags.join('|')})(?:\\s+[^>]*)?>)([\\s\\S]*?)</\\2\\s*>`, 'igms')
+  const results = []
+  for (const match of source.matchAll(pattern)) {
+    const attrs = parseAttrs(match[1], options.tagKey)
+    if (attrs) {
+      attrs[options.contentKey] = match[3]
+      results.push(attrs)
+    }
+  }
+  return results
 }
 
 function parseAttrs(htmlTagText, tagKey = '<') {

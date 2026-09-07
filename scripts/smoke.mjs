@@ -14,6 +14,11 @@ assert.deepStrictEqual(
   'parse() smoke result mismatch'
 )
 assert.strictEqual(stripComments('a<!--b-->c'), 'ac', 'stripComments() smoke mismatch')
+assert.deepStrictEqual(
+  parse('<title>Hi</title>', 'title', {content: true}),
+  [{'<': 'title', '>': 'Hi'}],
+  'parse() content option smoke mismatch'
+)
 
 // The opt-in selector layer: the default import is the callable select function, and the
 // named exports resolve.
