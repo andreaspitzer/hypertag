@@ -3,7 +3,7 @@
 export interface ParseOptions {
   /**
    * Key under which the matched tag name is stored on each result object.
-   * @default '<'
+   * @default '$tag'
    */
   tagKey?: string
   /**
@@ -13,7 +13,7 @@ export interface ParseOptions {
   content?: boolean
   /**
    * Key under which element content is stored when `content` is enabled.
-   * @default '>'
+   * @default '$content'
    */
   contentKey?: string
 }
@@ -62,9 +62,9 @@ export declare const canonical: Preset
 export declare const stylesheets: Preset
 /** Alternate links (hreflang, feeds): `link[rel~=alternate]`. */
 export declare const alternates: Preset
-/** The `<title>` element with its text under the content key (`>`). */
+/** The `<title>` element with its text under the content key (`$content`). */
 export declare const title: Preset
-/** JSON-LD blocks: `script[type*=ld+json]` with each body under the content key (`>`), ready to JSON.parse. */
+/** JSON-LD blocks: `script[type*=ld+json]` with each body under the content key (`$content`), ready to JSON.parse. */
 export declare const jsonld: Preset
 
 export declare namespace select {

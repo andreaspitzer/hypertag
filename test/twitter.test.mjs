@@ -13,19 +13,19 @@ test('correctly parses relevant tags from twitter.com', async t => {
   const iconLinks = tags.filter(({rel}) => /\bicon\b/i.test(rel))
   t.deepEqual(iconLinks, [
     {
-      '<'  : 'link',
+      $tag: 'link',
       rel  : 'mask-icon',
       sizes: 'any',
       href : 'https://abs.twimg.com/responsive-web/client-web-legacy/icon-svg.168b89d5.svg',
       color: '#1D9BF0'
     },
     {
-      '<' : 'link',
+      $tag: 'link',
       rel : 'shortcut icon',
       href: '//abs.twimg.com/favicons/twitter.2.ico'
     },
     {
-      '<'  : 'link',
+      $tag: 'link',
       rel  : 'apple-touch-icon',
       sizes: '192x192',
       href : 'https://abs.twimg.com/responsive-web/client-web-legacy/icon-ios.b1fc7275.png'

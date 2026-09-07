@@ -15,11 +15,11 @@ test('full HTML', t => {
   `, 'hello')
   t.deepEqual(result, [
     {
-      '<'  : 'hello',
+      $tag: 'hello',
       world: 'yes'
     },
     {
-      '<': 'hello'
+      $tag: 'hello'
     }
   ])
 })
@@ -42,7 +42,7 @@ test('extend', t => {
 
 test('string and array arguments', t => {
   const input = '<hello who="world">'
-  const expected = [{'<': 'hello', who: 'world'}]
+  const expected = [{$tag: 'hello', who: 'world'}]
 
   t.deepEqual(parseTags(input, 'hello'), expected)
   t.deepEqual(parseTags(input, ['hello']), expected)
@@ -94,7 +94,7 @@ test('getTags with dash in tag', t => {
   t.deepEqual(
     parseTags(`<${randomTag}>`, randomTag),
     [{
-      '<': randomTag
+      $tag: randomTag
     }])
 })
 
@@ -116,8 +116,8 @@ test('match all tags', t => {
     .join('\n')
     + '<title>'
   const expected = [
-    ...generatedTags.map(tagname => ({'<': tagname})),
-    {'<': 'title'}
+    ...generatedTags.map(tagname => ({$tag: tagname})),
+    {$tag: 'title'}
   ]
 
   const result = parseTags(html, '*')

@@ -35,8 +35,8 @@ test('sanitize: preserves line breaks (content, not formatting), tidies around t
 })
 
 test('sanitize: cleans every string value of a Tag, preserves booleans and tag key', t => {
-  t.deepEqual(sanitize({'<': 'meta', content: 'a &amp; b', 'data-x': true}), {
-    '<': 'meta',
+  t.deepEqual(sanitize({$tag: 'meta', content: 'a &amp; b', 'data-x': true}), {
+    $tag: 'meta',
     content: 'a & b',
     'data-x': true
   })
@@ -53,7 +53,7 @@ test('sanitize: maps over an array of tags, non-strings pass through', t => {
 
 test('sanitize: works directly on parse() output', t => {
   const tags = parse('<meta name="d" content="Rock &amp; Roll &#151; live">', 'meta')
-  t.deepEqual(sanitize(tags), [{'<': 'meta', name: 'd', content: 'Rock & Roll — live'}])
+  t.deepEqual(sanitize(tags), [{$tag: 'meta', name: 'd', content: 'Rock & Roll — live'}])
 })
 
 test('sanitize: pluggable decoder via options.decode', t => {

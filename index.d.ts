@@ -18,7 +18,7 @@ declare namespace parse {
   interface ParseOptions {
     /**
      * Key under which the matched tag name is stored on each result object.
-     * @default '<'
+     * @default '$tag'
      */
     tagKey?: string
     /**
@@ -31,7 +31,7 @@ declare namespace parse {
     content?: boolean
     /**
      * Key under which element content is stored when `content` is enabled.
-     * @default '>'
+     * @default '$content'
      */
     contentKey?: string
   }

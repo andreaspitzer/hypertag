@@ -36,17 +36,22 @@ console.log(result)
 
 [
   {
-    '<' : 'meta',
+    $tag: 'meta',
     name: 'hello',
     content: 'world'
   },
   {
-    '<' : 'meta',
+    $tag: 'meta',
     name: 'hello',
     content: 'moon'
   }
 ]
 ```
+
+The matched tag name is stored under `$tag` — a `$`-prefixed key so it can never collide with a
+real attribute, and dot-accessible (`result[0].$tag`). With `{content: true}` the element's
+content lands under `$content` the same way. Both keys are configurable via `tagKey` /
+`contentKey`.
 
 ### Examples
 
@@ -58,7 +63,7 @@ const result = parse(html, 'link')
 
 [
   {
-    '<': 'link',
+    $tag: 'link',
     rel: 'icon',
     href: 'favicon.png',
     sizes: '16x16'
@@ -74,7 +79,7 @@ const result = parse(html, 'meta')
 
 [
   {
-    '<': 'meta',
+    $tag: 'meta',
     property: 'og:image',
     content: 'http://static01.nyt.com/images/2015/02/19/arts/international/19iht-btnumbers19A/19iht-btnumbers19A-facebookJumbo-v2.jpg'
   }
@@ -84,14 +89,14 @@ const result = parse(html, 'meta')
 #### Getting element content (title, JSON-LD)
 
 Attributes aren't everything - the page title and JSON-LD live *between* the tags. Pass
-`{content: true}` and each result gains a `>` key with the element's content:
+`{content: true}` and each result gains a `$content` key with the element's content:
 
 ```js
-parse(html, 'title', {content: true})[0]['>']       // 'HTTP | MDN'
+parse(html, 'title', {content: true})[0].$content       // 'HTTP | MDN'
 
 parse(html, 'script', {content: true})
   .filter(s => /ld\+json/i.test(s.type ?? ''))
-  .map(s => JSON.parse(s['>']))                       // the page's JSON-LD objects
+  .map(s => JSON.parse(s.$content))                       // the page's JSON-LD objects
 ```
 
 Content capture is reliable for HTML raw-text (`script`, `style`) and escapable-raw-text
@@ -231,14 +236,14 @@ canonical(html)   // link[rel=canonical]
 ```
 
 `title` and `jsonld` are **content-aware** — they turn on the core `content` option, so each
-result carries the element's content under `>`:
+result carries the element's content under `$content`:
 
 ```js
 import {title, jsonld} from 'hypertag/select'
 import {decode} from 'hypertag/sanitize'
 
-decode(title(html)[0]?.['>'])                    // the page title, entities decoded
-jsonld(html).map(s => JSON.parse(s['>']))        // the page's JSON-LD objects
+decode(title(html)[0]?.$content)                    // the page title, entities decoded
+jsonld(html).map(s => JSON.parse(s.$content))        // the page's JSON-LD objects
 ```
 
 The full set: `og`, `twitter`, `icons`, `canonical`, `stylesheets`, `alternates`, `title`,

@@ -10,13 +10,13 @@ for (const [name, fn] of Object.entries({parseAttrs, stripComments, extend})) {
 
 assert.deepStrictEqual(
   parse('<meta name="x" content="y">', 'meta'),
-  [{'<': 'meta', name: 'x', content: 'y'}],
+  [{$tag: 'meta', name: 'x', content: 'y'}],
   'parse() smoke result mismatch'
 )
 assert.strictEqual(stripComments('a<!--b-->c'), 'ac', 'stripComments() smoke mismatch')
 assert.deepStrictEqual(
   parse('<title>Hi</title>', 'title', {content: true}),
-  [{'<': 'title', '>': 'Hi'}],
+  [{$tag: 'title', $content: 'Hi'}],
   'parse() content option smoke mismatch'
 )
 
@@ -28,13 +28,13 @@ for (const name of ['select', 'compile', 'og', 'jsonld']) {
   assert.strictEqual(typeof selectMod[name], 'function', `missing named export: ${name}`)
 }
 assert.strictEqual(
-  selectMod.jsonld('<script type="application/ld+json">{"a":1}</script>')[0]['>'],
+  selectMod.jsonld('<script type="application/ld+json">{"a":1}</script>')[0].$content,
   '{"a":1}',
   'select.jsonld() preset smoke mismatch'
 )
 assert.deepStrictEqual(
   selectMod.default('<link rel="alternate" href="/x"><link rel="stylesheet">', 'link[rel=alternate]'),
-  [{'<': 'link', rel: 'alternate', href: '/x'}],
+  [{$tag: 'link', rel: 'alternate', href: '/x'}],
   'select() smoke result mismatch'
 )
 
@@ -47,7 +47,7 @@ for (const name of ['sanitize', 'decode', 'cleanUrl']) {
 assert.strictEqual(sanitizeMod.decode('a &amp; b &#151; c'), 'a & b — c', 'decode() smoke mismatch')
 assert.deepStrictEqual(
   sanitizeMod.default(parse('<meta name="x" content="Rock &amp; Roll">', 'meta')),
-  [{'<': 'meta', name: 'x', content: 'Rock & Roll'}],
+  [{$tag: 'meta', name: 'x', content: 'Rock & Roll'}],
   'sanitize() smoke result mismatch'
 )
 

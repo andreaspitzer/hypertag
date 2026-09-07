@@ -20,7 +20,7 @@ declare namespace select {
   interface ParseOptions {
     /**
      * Key under which the matched tag name is stored on each result object.
-     * @default '<'
+     * @default '$tag'
      */
     tagKey?: string
     /**
@@ -30,7 +30,7 @@ declare namespace select {
     content?: boolean
     /**
      * Key under which element content is stored when `content` is enabled.
-     * @default '>'
+     * @default '$content'
      */
     contentKey?: string
   }
@@ -65,8 +65,8 @@ declare namespace select {
   const stylesheets: Preset
   /** Alternate links (hreflang, feeds): `link[rel~=alternate]`. */
   const alternates: Preset
-  /** The `<title>` element with its text under the content key (`>`). */
+  /** The `<title>` element with its text under the content key (`$content`). */
   const title: Preset
-  /** JSON-LD blocks: `script[type*=ld+json]` with each body under the content key (`>`), ready to JSON.parse. */
+  /** JSON-LD blocks: `script[type*=ld+json]` with each body under the content key (`$content`), ready to JSON.parse. */
   const jsonld: Preset
 }

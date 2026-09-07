@@ -18,8 +18,8 @@ function parse(source, tags, options) {
   tags = Array.isArray(tags) ? tags : [tags]
   tags = tags.map(tag => tag === '*' ? '[^/\\s>]+' : tag)
   options = {
-    tagKey: '<',
-    contentKey: '>',
+    tagKey: '$tag',
+    contentKey: '$content',
     ...options,
   }
 
@@ -52,7 +52,7 @@ function parseWithContent(source, tags, options) {
   return results
 }
 
-function parseAttrs(htmlTagText, tagKey = '<') {
+function parseAttrs(htmlTagText, tagKey = '$tag') {
   const attrs = {}
 
   attrPattern.lastIndex = 0

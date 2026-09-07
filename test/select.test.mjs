@@ -140,8 +140,8 @@ test('presets are pre-baked selectors returning raw tags', t => {
 
 test('content-aware presets: title and jsonld carry element content', t => {
   const page = '<title>My &amp; Page</title><script type="application/ld+json">{"@type":"Article"}</script>'
-  t.is(select.title(page)[0]['>'], 'My &amp; Page') // raw; pair with sanitize.decode
-  t.is(JSON.parse(select.jsonld(page)[0]['>'])['@type'], 'Article')
+  t.is(select.title(page)[0].$content, 'My &amp; Page') // raw; pair with sanitize.decode
+  t.is(JSON.parse(select.jsonld(page)[0].$content)['@type'], 'Article')
 })
 
 test('twitter fixture parity with parse().filter()', async t => {

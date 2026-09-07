@@ -115,14 +115,14 @@ export default [
       const prop = v => metas.find(m => (m.property || '').toLowerCase() === v)?.content
       const name = v => metas.find(m => (m.name || '').toLowerCase() === v)?.content
       const rel = v => links.find(l => (l.rel || '').toLowerCase() === v)?.href
-      const titleText = parse(html, 'title', {content: true})[0]?.['>']
+      const titleText = parse(html, 'title', {content: true})[0]?.$content
 
       // Flatten every JSON-LD block (and its @graph) into one list of objects to pick from.
       const ld = parse(html, 'script', {content: true})
         .filter(s => /ld\+json/i.test(s.type ?? ''))
         .flatMap(s => {
           try {
-            const json = JSON.parse(s['>'])
+            const json = JSON.parse(s.$content)
             return Array.isArray(json) ? json : (json['@graph'] ?? [json])
           } catch {
             return []

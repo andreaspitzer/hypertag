@@ -3,7 +3,7 @@
 export interface ParseOptions {
   /**
    * Key under which the matched tag name is stored on each result object.
-   * @default '<'
+   * @default '$tag'
    */
   tagKey?: string
   /**
@@ -16,7 +16,7 @@ export interface ParseOptions {
   content?: boolean
   /**
    * Key under which element content is stored when `content` is enabled.
-   * @default '>'
+   * @default '$content'
    */
   contentKey?: string
 }
