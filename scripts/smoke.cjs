@@ -28,4 +28,17 @@ assert.deepStrictEqual(
   'select() smoke result mismatch'
 )
 
+// The opt-in sanitize layer: require('hypertag/sanitize') is the callable sanitize function
+// with `sanitize`, `decode` and `cleanUrl` attached.
+const sanitize = require('../sanitize.js')
+for (const name of ['sanitize', 'decode', 'cleanUrl']) {
+  assert.strictEqual(typeof sanitize[name], 'function', `missing named export: ${name}`)
+}
+assert.strictEqual(sanitize.decode('a &amp; b &#151; c'), 'a & b — c', 'decode() smoke mismatch')
+assert.deepStrictEqual(
+  sanitize(parse('<meta name="x" content="Rock &amp; Roll">', 'meta')),
+  [{'<': 'meta', name: 'x', content: 'Rock & Roll'}],
+  'sanitize() smoke result mismatch'
+)
+
 console.log('smoke: CJS require() OK')

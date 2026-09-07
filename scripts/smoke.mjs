@@ -28,4 +28,17 @@ assert.deepStrictEqual(
   'select() smoke result mismatch'
 )
 
+// The opt-in sanitize layer: default import is the callable sanitize function, named exports resolve.
+const sanitizeMod = await import('../sanitize.mjs')
+assert.strictEqual(typeof sanitizeMod.default, 'function', 'import default must be the sanitize function')
+for (const name of ['sanitize', 'decode', 'cleanUrl']) {
+  assert.strictEqual(typeof sanitizeMod[name], 'function', `missing named export: ${name}`)
+}
+assert.strictEqual(sanitizeMod.decode('a &amp; b &#151; c'), 'a & b — c', 'decode() smoke mismatch')
+assert.deepStrictEqual(
+  sanitizeMod.default(parse('<meta name="x" content="Rock &amp; Roll">', 'meta')),
+  [{'<': 'meta', name: 'x', content: 'Rock & Roll'}],
+  'sanitize() smoke result mismatch'
+)
+
 console.log('smoke: ESM import OK')

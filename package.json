@@ -46,6 +46,16 @@
         "default": "./select.js"
       }
     },
+    "./sanitize": {
+      "import": {
+        "types": "./sanitize.d.mts",
+        "default": "./sanitize.mjs"
+      },
+      "require": {
+        "types": "./sanitize.d.ts",
+        "default": "./sanitize.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -57,7 +67,11 @@
     "select.js",
     "select.mjs",
     "select.d.ts",
-    "select.d.mts"
+    "select.d.mts",
+    "sanitize.js",
+    "sanitize.mjs",
+    "sanitize.d.ts",
+    "sanitize.d.mts"
   ],
   "engines": {
     "node": ">=18"

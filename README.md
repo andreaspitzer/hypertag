@@ -189,11 +189,47 @@ case-sensitive. Combinators (` `, `>`, `+`), comma groups, and `.class`/`#id` sh
 **not** supported — hypertag builds no tree — and a selector using them throws a `TypeError`
 rather than matching silently.
 
+## 🧼 Sanitize (opt-in)
+
+The core returns attribute values exactly as written, so HTML entities stay encoded
+(`Rock &amp; Roll`) and whitespace is untouched. The separate `hypertag/sanitize` entry
+decodes and tidies them:
+
+```js
+import sanitize, {decode, cleanUrl} from 'hypertag/sanitize'  // ESM
+// const sanitize = require('hypertag/sanitize')               // CommonJS
+
+sanitize(parse(html, 'meta'))          // decode + collapse whitespace on every attribute
+decode('caf&eacute; &#151; done')      // 'café — done'
+cleanUrl('/p?utm_source=x', base)      // resolve + strip tracking params
+```
+
+`sanitize` is polymorphic: hand it a string, a single tag, or the whole array from `parse`,
+and it returns the same shape with every string value decoded, whitespace-collapsed and
+trimmed (booleans and other values pass through).
+
+**Tiny and fast by design, pluggable when you need more.** The built-in decoder covers what
+real metadata actually uses — numeric references, the Windows-1252 remap that old CMSes emit
+(`&#151;` → `—`), and a common named set — in **~1.3 kB gzipped**, versus ~21 kB for
+[`entities`](https://github.com/fb55/entities) or ~30 kB for [`he`](https://github.com/mathiasbynens/he).
+On real pages it matches `entities` exactly. For the long tail (the full ~2,000 HTML5 named
+entities, or semicolon-less legacy refs), inject a full decoder and pay for it only then:
+
+```js
+import {decodeHTML} from 'entities'
+sanitize(parse(html, 'meta'), {decode: decodeHTML})
+```
+
+`cleanUrl` resolves a relative URL against a base and strips what a bare `new URL()` won't:
+credentials, `utm_*` tracking parameters, and `#:~:text=` fragment directives. It does **not**
+prettify text (no smart quotes) — hypertag returns what the page said.
+
 ## 🚫 When not to reach for hypertag
 
 hypertag is an extraction primitive, not a full parser. Its core has no CSS selectors (the
-opt-in `hypertag/select` layer above only sugars single-tag attribute filtering), no DOM
-traversal, and it does not repair malformed or badly nested HTML the way a spec parser does. It does not fetch URLs; you hand it an HTML string you already have. And it is not a metadata ruleset: it returns the raw `<meta>` and `<link>` tags, not the JSON-LD, Twitter Card, and oEmbed fallbacks that tools like metascraper layer on top. If you need any of those, reach for cheerio, jsdom, or metascraper.
+opt-in `hypertag/select` layer above only sugars single-tag attribute filtering), no entity
+decoding (the opt-in `hypertag/sanitize` layer adds a tiny one), no DOM traversal, and it does
+not repair malformed or badly nested HTML the way a spec parser does. It does not fetch URLs; you hand it an HTML string you already have. And it is not a metadata ruleset: it returns the raw `<meta>` and `<link>` tags, not the JSON-LD, Twitter Card, and oEmbed fallbacks that tools like metascraper layer on top. If you need any of those, reach for cheerio, jsdom, or metascraper.
 
 # Benchmarks 🍏🍊
 
