@@ -79,3 +79,9 @@ typings/
 .dynamodb/ 
 
 dist/
+
+# Local Claude Code session config
+.claude/
+
+# Internal positioning research, kept local (not published)
+research/

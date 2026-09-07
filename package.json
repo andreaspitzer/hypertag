@@ -1,19 +1,22 @@
 {
   "name": "hypertag",
   "version": "0.0.6",
-  "description": "The fastest HTML tag and attributes parser — a superfast getElementsByTagName without the DOM.",
+  "description": "Tiny zero-dependency HTML parser: read tag attributes from an HTML string with a getElementsByTagName that needs no DOM. Runs on Node, Deno, Bun and the edge.",
   "keywords": [
+    "html-parser",
+    "parse-html",
     "html",
     "parser",
-    "tag",
-    "tags",
-    "attributes",
-    "getElementsByTagName",
-    "fast",
-    "scraper",
+    "meta-tags",
     "meta",
+    "open-graph",
+    "og",
     "opengraph",
-    "favicon"
+    "scraper",
+    "attributes",
+    "favicon",
+    "cloudflare-workers",
+    "getElementsByTagName"
   ],
   "author": "Andreas Pitzer <hopster@gmail.com> (https://github.com/andreaspitzer)",
   "repository": "andreaspitzer/hypertag",
@@ -60,16 +63,9 @@
     "@commitlint/cli": "^21.2.2",
     "@commitlint/config-conventional": "^21.2.2",
     "ava": "^8.0.1",
-    "benchmark": "^2.1.4",
     "c8": "^12.0.0",
-    "cheerio": "^1.2.0",
     "commit-and-tag-version": "^13.1.2",
-    "fast-html": "^0.1.2",
-    "html-parse-stringify": "^4.0.1",
-    "html-tag-parser": "^1.0.0",
-    "htmlparser2": "^12.0.0",
-    "husky": "^9.1.7",
-    "parse5": "^8.0.1"
+    "husky": "^9.1.7"
   },
   "commitlint": {
     "extends": [

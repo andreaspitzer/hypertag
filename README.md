@@ -1,14 +1,15 @@
 # </​hypertag> [![npm-version-badge][]]() [![npm-license-badge][]]()
 
-> The fastest HTML tag and attributes parser.
+> **The smallest, fastest HTML parser that skips the DOM.**
 
-**hypertag** is an HTML tag parser built for speed. Use it to find specific HTML tags and their attributes in HTML documents. It’s like a superfast `getElementsByTagName` without the DOM.
+🏎️ **hypertag** parses an HTML string and returns the tag attributes you ask for as plain objects: a `getElementsByTagName` that needs no DOM. Zero dependencies, about 0.8 kB, and in the benchmark below the fastest and smallest way to pull `<meta>`, `<link>`, and other tags out of HTML. Runs on Node, Deno, Bun, and the edge.
 
 ## ✨ Features
-  + ✅  **Hyperfast.** 50 × faster than cheerio, 30 × parse5, 10 × htmlparser2.
-  + ✅  **Tiny.** < 700 bytes gzipped.
-  + ✅  **Complete** Zero dependencies.
-  + ✅  **Robust.** 100% Code Coverage. [![ci-badge]][ci-link]
+  + ✅  **Tiny.** ~0.8 kB bundled, 35x smaller than htmlparser2 and ~1000x smaller than jsdom, so it barely touches an edge bundle.
+  + ✅  **Zero dependencies.** Nothing to audit, break, or bloat your tree.
+  + ✅  **Just the tags.** Name the tags you want, get their attributes back as plain objects. No DOM, no selectors to learn.
+  + ✅  **Fast and light.** 2.6x faster than node-html-parser and up to 95x faster than the DOM parsers, and it builds no tree so it retains almost no memory.
+  + ✅  **Auditable.** One small file you can read in a minute, 100% test coverage. [![ci-badge]][ci-link]
 
 ## 📦 Install
 
@@ -80,11 +81,11 @@ const result = parse(html, 'meta')
 ]
 ```
 
-## 🧩 Recipes — modern runtimes
+## 🧩 Recipes for modern runtimes
 
-Because hypertag is zero-dependency, tiny, and needs no DOM, it runs anywhere JavaScript does — including edge runtimes where `cheerio`/`jsdom` won't fit. Examples use the ESM `import`; swap for `const parse = require('hypertag')` under CommonJS.
+Because hypertag is zero-dependency, tiny, and needs no DOM, it runs anywhere JavaScript does, including edge runtimes where `cheerio`/`jsdom` won't fit. Examples use the ESM `import`; swap for `const parse = require('hypertag')` under CommonJS.
 
-#### Cloudflare Workers / Vercel Edge — link-preview metadata
+#### Cloudflare Workers / Vercel Edge: link-preview metadata
 
 ```js
 import parse from 'hypertag'
@@ -105,9 +106,9 @@ export default {
 }
 ```
 
-No `nodejs_compat`, no bundler, no polyfill — hypertag is a single dependency-free module.
+No `nodejs_compat`, no bundler, no polyfill. hypertag is a single dependency-free module.
 
-#### Next.js — Route Handler (App Router)
+#### Next.js: Route Handler (App Router)
 
 ```js
 // app/api/preview/route.js
@@ -130,7 +131,7 @@ export async function GET(request) {
 }
 ```
 
-#### Deno / Bun — favicon discovery
+#### Deno / Bun: favicon discovery
 
 ```js
 import parse from 'npm:hypertag' // Deno; on Bun: import parse from 'hypertag'
@@ -143,36 +144,37 @@ const icons = parse(html, 'link')
 console.log(icons)
 ```
 
+## 🚫 When not to reach for hypertag
+
+hypertag is an extraction primitive, not a full parser. It has no CSS selectors, no DOM traversal, and it does not repair malformed or badly nested HTML the way a spec parser does. It does not fetch URLs; you hand it an HTML string you already have. And it is not a metadata ruleset: it returns the raw `<meta>` and `<link>` tags, not the JSON-LD, Twitter Card, and oEmbed fallbacks that tools like metascraper layer on top. If you need any of those, reach for cheerio, jsdom, or metascraper.
+
 # Benchmarks 🍏🍊
-Run benchmarks with
+
+Every number here is reproducible. The comparison parsers live in `benchmark/`, isolated from the package:
+
 ```sh
-$ ./benchmark.js
+cd benchmark && npm install && npm run bench
 ```
-#### Benchmark Design
 
-The tested packages all do different things and have their strengths in different areas, so the benchmark by design compares apples to oranges.
+The task is identical for every library: from a real 90 kB page, pull every `<meta>` and `<link>` tag with its attributes (all nine return the same 79 tags). One sample run on Node 24 is shown below; absolute numbers vary by machine, the ratios are the point.
 
-The question this benchmark aims to answer is
+Sorted by speed. Every metric is shown as a multiple of hypertag, so 1x is best and anything higher is worse.
 
-> How fast can I find tags of interest in an HTML string?
+| parser | speed | bundle size | peak memory |
+| --- | --- | --- | --- |
+| **hypertag** | **11,742 ops/s · 1x** | **0.8 kB · 1x** | **49.9 MB · 1x** |
+| node-html-parser | 4,444 · 2.6x slower | 82.9 kB · 106x | 63.2 MB · 1.3x |
+| htmlparser2 | 2,941 · 4.0x slower | 27.6 kB · 35x | 59.0 MB · 1.2x |
+| html5parser | 2,232 · 5.3x slower | 2.4 kB · 3x | 57.1 MB · 1.1x |
+| domino | 1,980 · 5.9x slower | 90.4 kB · 115x | 81.8 MB · 1.6x |
+| linkedom | 1,031 · 11x slower | 94.6 kB · 121x | 72.8 MB · 1.5x |
+| parse5 | 513 · 23x slower | 47.2 kB · 60x | 83.7 MB · 1.7x |
+| cheerio | 353 · 33x slower | 489 kB · 625x | 166.3 MB · 3.3x |
+| jsdom | 123 · 95x slower | 775 kB · 989x | 240.9 MB · 4.8x |
 
-Most of the tested parsers come with many more features and allow you to do more complex queries than hypertag; for example, parse5 and cheerio create a whole DOM, and similarly html-parse-stringify creates an AST. html-tag-parser parses tags but not attributes.
+The sharpest single number is retained heap: hypertag keeps ~0 MB (it holds no tree) versus 74.5 MB for jsdom. See [benchmark/](benchmark/) for that column and the method.
 
-One objection could be that this is an unfair test, since the parsers are just too different. This can be rebutted by the fact that one ought to pick the right tool for the job: a sports car is faster than a truck, but the truck can load more freight. Do you need a fast and simple parser to find a few tags or do you want to manipulate a DOM?
-
-For this benchmark, we load a pretty "standard" web page (specifically, apple.com) and the let each of the parsers parse the HTML.
-
-#### Results
-```sh
-hypertag x 10,248 ops/sec ±0.78% (88 runs sampled)
-fast-html x 980 ops/sec ±1.36% (87 runs sampled)
-parse5 x 323 ops/sec ±1.68% (83 runs sampled)
-htmlparser2 x 1,079 ops/sec ±0.87% (88 runs sampled)
-html-tag-parser x 1,482 ops/sec ±0.71% (91 runs sampled)
-cheerio x 182 ops/sec ±5.20% (70 runs sampled)
-html-parse-stringify x 499 ops/sec ±1.07% (87 runs sampled)
-Fastest is hypertag
-```
+hypertag wins by doing less: it scans the string once and returns plain objects, with no DOM or tree to build and hold. That is also the tradeoff. If you need selectors, text content, traversal, or mutation, reach for node-html-parser or cheerio (see **When not to reach for hypertag** above). Most run at the edge too (cheerio needs a Node-compat flag); they just cost more to ship.
 
 [npm-version-badge]:    https://flat.badgen.net/npm/v/hypertag
 [npm-license-badge]:    https://flat.badgen.net/npm/license/hypertag

@@ -1,0 +1,25 @@
+{
+  "name": "hypertag-benchmark",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated benchmark harness for hypertag. Comparison parsers live here, not in the published package.",
+  "scripts": {
+    "bench": "node speed.mjs && node size.mjs && node memory.mjs",
+    "bench:speed": "node speed.mjs",
+    "bench:size": "node size.mjs",
+    "bench:memory": "node memory.mjs"
+  },
+  "devDependencies": {
+    "benchmark": "^2.1.4",
+    "cheerio": "^1.2.0",
+    "domino": "^2.1.8",
+    "esbuild": "^0.25.0",
+    "html5parser": "^3.0.0",
+    "htmlparser2": "^12.0.0",
+    "jsdom": "^25.0.0",
+    "linkedom": "^0.18.13",
+    "node-html-parser": "^7.0.0",
+    "parse5": "^8.0.1"
+  }
+}
