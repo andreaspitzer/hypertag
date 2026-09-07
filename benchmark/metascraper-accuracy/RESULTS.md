@@ -7,11 +7,12 @@ change, so the fixtures are committed to pin this run.
 
 ## Coverage (6 pages x 7 fields = 42)
 
-| tool | fields filled |
-| --- | ---: |
-| metascraper | 37/42 |
-| open-graph-scraper | 26/42 |
-| hypertag (hand-written rule layer) | 23/42 |
+| tool | fields filled | agreement with metascraper |
+| --- | ---: | ---: |
+| metascraper | 37/42 | - |
+| open-graph-scraper | 26/42 | 29/42 |
+| hypertag (raw rule layer) | 23/42 | 26/42 |
+| hypertag + `hypertag/sanitize` | 23/42 | **27/42** |
 
 ## Per field (pages filled, out of 6)
 
@@ -36,14 +37,31 @@ change, so the fixtures are committed to pin this run.
   2. **Element text**: on MDN the title/image are only in `<title>` / JSON-LD, not OG, so
      hypertag misses them. open-graph-scraper gets the title (6/6) because it is cheerio-based
      and reads element text; hypertag, attribute-only, cannot.
-- The only two cases where hypertag produced a *different* value than metascraper are
-  **normalization, not wrong content**: hypertag returned the raw `og:image` with its
+- The cases where raw hypertag produced a *different* value than metascraper are
+  **normalization, not wrong content**: it returned the raw `og:image` with its
   `?utm_source=...` tracking query and an undecoded `&amp;` (Wikipedia), and a raw ` ...`
-  where metascraper decoded `…` (YouTube). metascraper cleans URLs and decodes HTML entities.
+  where metascraper's title cleanup emits `…` (YouTube). metascraper cleans URLs and decodes
+  HTML entities.
+
+## What `hypertag/sanitize` changes
+
+Running the same rule layer's output through `hypertag/sanitize` (entity-decode + whitespace
+tidy on text, `cleanUrl` on URLs) lifts agreement from **26 to 27**. It is a **quality** gain,
+not a coverage one - sanitize cleans the values hypertag already has, it does not find new
+ones, so `author`/`date` stay 0 (JSON-LD) and coverage stays 23/42. Concretely:
+
+- **Wikipedia image now matches metascraper**: `cleanUrl` strips the `?utm_*` tracking params
+  and `decode` turns `&amp;` into `&`.
+- **The MDN description keeps its newline**: `sanitize` collapses runs of *horizontal*
+  whitespace but preserves line breaks, so it matches metascraper (which keeps the `\n`) and
+  stays faithful to the source. An earlier `\s+`->space rule flattened that newline; this
+  benchmark is what caught it.
+- The residual YouTube `…` difference is metascraper's title *prettification* (trailing `...`
+  -> `…`), which hypertag deliberately does not do - it returns what the page said.
 
 ## Takeaway
 
 open-graph-scraper sits between the two: like hypertag it cannot read JSON-LD (author/date =
 0), but unlike hypertag it reads element text. metascraper's weight buys exactly two things
 over a raw-tag reader here - **JSON-LD parsing** and **text extraction / normalization**. On
-plain OpenGraph tags, the 22 kB zero-dependency reader is even with it.
+plain OpenGraph tags, hypertag (zero-dependency core + the ~1.3 kB sanitize layer) matches it.

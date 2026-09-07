@@ -38,7 +38,11 @@ const NAMED = {
 }
 
 const entityPattern = /&(#\d+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi
-const whitespacePattern = /\s+/g
+// Collapse runs of horizontal whitespace to one space, but PRESERVE line breaks: a newline
+// in a description is content, and flattening it to a space is less faithful than the source
+// (and diverges from what metascraper keeps). `[^\S\n]` is "whitespace that is not a newline".
+const horizontalPattern = /[^\S\n]+/g
+const aroundNewlinePattern = / *\n */g
 
 module.exports = sanitize
 Object.assign(module.exports, {
@@ -57,7 +61,7 @@ function sanitize(value, options) {
 
 function clean(value, decoder) {
   if (typeof value === 'string') {
-    return decoder(value).replace(whitespacePattern, ' ').trim()
+    return decoder(value).replace(horizontalPattern, ' ').replace(aroundNewlinePattern, '\n').trim()
   }
   if (Array.isArray(value)) {
     return value.map(item => clean(item, decoder))

@@ -5,6 +5,7 @@
 // for the original's other libraries (html-metadata / node-metainspector / unfluff are
 // unmaintained and left out - add them back as entries here if you want them).
 import parse from 'hypertag'
+import {cleanUrl, decode, sanitize} from 'hypertag/sanitize'
 import metascraperFactory from 'metascraper'
 import metascraperAuthor from 'metascraper-author'
 import metascraperDate from 'metascraper-date'
@@ -71,6 +72,33 @@ export default [
         author: name('author') ?? prop('article:author') ?? null,
         date: prop('article:published_time') ?? name('date') ?? null,
         publisher: prop('og:site_name') ?? null
+      }
+    }
+  },
+
+  {
+    // Same rule layer as `hypertag`, but its output is run through hypertag/sanitize: text
+    // fields are entity-decoded + whitespace-collapsed, URL fields are decoded then cleaned
+    // (relative resolved, credentials / utm_* / #:~:text= stripped). This closes the
+    // normalization gap with metascraper; it does NOT add coverage (JSON-LD author/date and
+    // text-only titles are still out of reach - sanitize cleans values, it does not find new ones).
+    name: 'hypertag+sanitize',
+    async run(url, html) {
+      const metas = parse(html, 'meta')
+      const links = parse(html, 'link')
+      const prop = v => metas.find(m => (m.property || '').toLowerCase() === v)?.content
+      const name = v => metas.find(m => (m.name || '').toLowerCase() === v)?.content
+      const rel = v => links.find(l => (l.rel || '').toLowerCase() === v)?.href
+      const text = v => (v == null ? null : sanitize(v))
+      const link = v => (v == null ? null : cleanUrl(decode(v), url))
+      return {
+        title: text(prop('og:title') ?? name('twitter:title')),
+        description: text(prop('og:description') ?? name('description') ?? name('twitter:description')),
+        image: link(prop('og:image') ?? name('twitter:image')),
+        url: link(prop('og:url') ?? rel('canonical')),
+        author: text(name('author') ?? prop('article:author')),
+        date: prop('article:published_time') ?? name('date') ?? null,
+        publisher: text(prop('og:site_name'))
       }
     }
   },

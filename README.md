@@ -205,8 +205,9 @@ cleanUrl('/p?utm_source=x', base)      // resolve + strip tracking params
 ```
 
 `sanitize` is polymorphic: hand it a string, a single tag, or the whole array from `parse`,
-and it returns the same shape with every string value decoded, whitespace-collapsed and
-trimmed (booleans and other values pass through).
+and it returns the same shape with every string value decoded, trimmed, and its runs of
+horizontal whitespace collapsed (booleans and other values pass through). Line breaks are
+**preserved** - a newline in a description is content, not formatting.
 
 **Tiny and fast by design, pluggable when you need more.** The built-in decoder covers what
 real metadata actually uses — numeric references, the Windows-1252 remap that old CMSes emit

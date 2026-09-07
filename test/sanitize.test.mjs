@@ -24,8 +24,14 @@ test('decode: fast path and prototype safety', t => {
   t.is(decode('&#xD800;'), '&#xD800;') // lone surrogate -> left verbatim
 })
 
-test('sanitize: string decodes, collapses whitespace, trims', t => {
-  t.is(sanitize('  Rock &amp;   Roll\n'), 'Rock & Roll')
+test('sanitize: string decodes, collapses horizontal whitespace, trims', t => {
+  t.is(sanitize('  Rock &amp;   Roll\t'), 'Rock & Roll')
+})
+
+test('sanitize: preserves line breaks (content, not formatting), tidies around them', t => {
+  t.is(sanitize('first line.\nsecond line.'), 'first line.\nsecond line.')
+  t.is(sanitize('a  \n  b'), 'a\nb') // spaces around the newline collapse, newline stays
+  t.is(sanitize('trailing\n'), 'trailing') // trailing newline trimmed
 })
 
 test('sanitize: cleans every string value of a Tag, preserves booleans and tag key', t => {
