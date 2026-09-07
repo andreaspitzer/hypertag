@@ -6,6 +6,7 @@
   "description": "Isolated benchmark harness for hypertag. Comparison parsers live here, not in the published package.",
   "scripts": {
     "bench": "node speed.mjs && node size.mjs && node memory.mjs",
+    "bench:select": "node select-vs-parse.mjs",
     "bench:speed": "node speed.mjs",
     "bench:size": "node size.mjs",
     "bench:memory": "node memory.mjs"
