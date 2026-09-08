@@ -9,6 +9,7 @@
     "bench:select": "node select-vs-parse.mjs",
     "bench:og": "node og-vs-metascraper.mjs",
     "bench:unified": "node unified-vs-metascraper.mjs",
+    "bench:edge": "cd edge-libs && npm install && npm run footprint && npm start",
     "bench:speed": "node speed.mjs",
     "bench:size": "node size.mjs",
     "bench:memory": "node memory.mjs"
