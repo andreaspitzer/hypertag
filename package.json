@@ -56,6 +56,26 @@
         "default": "./sanitize.js"
       }
     },
+    "./ld": {
+      "import": {
+        "types": "./ld.d.mts",
+        "default": "./ld.mjs"
+      },
+      "require": {
+        "types": "./ld.d.ts",
+        "default": "./ld.js"
+      }
+    },
+    "./meta": {
+      "import": {
+        "types": "./meta.d.mts",
+        "default": "./meta.mjs"
+      },
+      "require": {
+        "types": "./meta.d.ts",
+        "default": "./meta.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -71,7 +91,15 @@
     "sanitize.js",
     "sanitize.mjs",
     "sanitize.d.ts",
-    "sanitize.d.mts"
+    "sanitize.d.mts",
+    "ld.js",
+    "ld.mjs",
+    "ld.d.ts",
+    "ld.d.mts",
+    "meta.js",
+    "meta.mjs",
+    "meta.d.ts",
+    "meta.d.mts"
   ],
   "engines": {
     "node": ">=18"

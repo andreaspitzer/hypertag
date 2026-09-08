@@ -3,7 +3,7 @@ import test from 'ava'
 import parse from '../hypertag.js'
 import select from '../select.js'
 
-const {compile} = select
+const {compile, pick} = select
 
 const html = `
   <link rel="alternate" hreflang="en" href="/en">
@@ -212,6 +212,58 @@ test('content-aware presets: title and jsonld carry element content', t => {
   const page = '<title>My &amp; Page</title><script type="application/ld+json">{"@type":"Article"}</script>'
   t.is(select.title(page)[0].$content, 'My &amp; Page') // raw; pair with sanitize.decode
   t.is(JSON.parse(select.jsonld(page)[0].$content)['@type'], 'Article')
+})
+
+test('pick returns the first source with a usable value, in preference order', t => {
+  const page = '<meta name="twitter:title" content="TW"><meta property="og:title" content="OG">'
+  // Preference is source order, NOT document order: og:title wins though it comes second.
+  t.is(pick(page, ['meta[property=og:title]', 'meta[name=twitter:title]'], {attr: 'content'}), 'OG')
+  // Fall through to the second source when the first is absent.
+  t.is(pick('<meta name="twitter:title" content="TW">', ['meta[property=og:title]', 'meta[name=twitter:title]'], {attr: 'content'}), 'TW')
+  // Nothing matches → undefined.
+  t.is(pick('<p>', ['meta[property=og:title]'], {attr: 'content'}), undefined)
+})
+
+test('pick per-source attr overrides the default', t => {
+  const page = '<meta property="og:url" content="/a"><link rel="canonical" href="/b">'
+  t.is(pick(page, [['meta[property=og:url]', 'content'], ['link[rel=canonical]', 'href']]), '/a')
+  t.is(pick('<link rel="canonical" href="/b">', [['meta[property=og:url]', 'content'], ['link[rel=canonical]', 'href']]), '/b')
+})
+
+test('pick with no attribute yields the matched tag', t => {
+  const page = '<link rel="canonical" href="/x">'
+  t.deepEqual(pick(page, ['link[rel=canonical]']), {$tag: 'link', rel: 'canonical', href: '/x'})
+})
+
+test('pick reads $content, enabling the content option automatically', t => {
+  t.is(pick('<title>Hello</title>', [['title', '$content']]), 'Hello')
+})
+
+test('pick skips absent and empty values, falling through to the next source', t => {
+  const page = '<meta property="og:title" content=""><meta name="twitter:title" content="TW">'
+  // og:title is present but empty → treated as no value, falls through.
+  t.is(pick(page, ['meta[property=og:title]', 'meta[name=twitter:title]'], {attr: 'content'}), 'TW')
+})
+
+test('pick matches case-insensitively and reads the attribute case-insensitively', t => {
+  const page = '<META PROPERTY="OG:Title" CONTENT="Y">'
+  t.is(pick(page, ['meta[property=og:title]'], {attr: 'content'}), 'Y')
+})
+
+test('pick.compile bakes the sources once and is reusable', t => {
+  const title = pick.compile(['meta[property=og:title]', 'meta[name=twitter:title]'], {attr: 'content'})
+  t.is(title('<meta property="og:title" content="A">'), 'A')
+  t.is(title('<meta name="twitter:title" content="B">'), 'B')
+  t.is(title('<p>'), undefined)
+})
+
+test('pick handles a comma-group source (property-or-name union)', t => {
+  // MDN-style: og: written as name= instead of property=. A union source catches both.
+  const asName = '<meta name="og:image" content="/n.png">'
+  const asProp = '<meta property="og:image" content="/p.png">'
+  const src = [['meta[property=og:image], meta[name=og:image]', 'content']]
+  t.is(pick(asName, src), '/n.png')
+  t.is(pick(asProp, src), '/p.png')
 })
 
 test('twitter fixture parity with parse().filter()', async t => {

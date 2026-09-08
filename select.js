@@ -58,7 +58,8 @@ select.compile = (selector, options) => {
   if (groups.length === 1) {
     const {tag, conditions} = groups[0]
     const predicate = toPredicate(conditions)
-    return source => parse(source, tag, options).filter(predicate)
+    // `cache` (optional) is a caller-owned parse memo threaded to parse; see hypertag.js.
+    return (source, cache) => parse(source, tag, options, cache).filter(predicate)
   }
 
   // Selector list: parse the union of the groups' tags in one document-order pass, then keep
@@ -72,7 +73,37 @@ select.compile = (selector, options) => {
   const tags = compiled.some(g => g.tag === '*') ? ['*'] : [...new Set(compiled.map(g => g.tag))]
   const predicate = el =>
     compiled.some(g => (g.tag === '*' || el[tagKey].toLowerCase() === g.tag) && g.predicate(el))
-  return source => parse(source, tags, options).filter(predicate)
+  return (source, cache) => parse(source, tags, options, cache).filter(predicate)
+}
+
+// pick: the first usable value across an ordered list of sources, in preference order. Each
+// source is a selector string (read `options.attr`, when given) or a `[selector, attr]` tuple
+// (read `attr`); a source with no attribute yields the matched tag itself. Reading `$content`
+// turns on the core `content` option automatically. A source is skipped when it matches no
+// tag, or the attribute is absent, `null`, or an empty string - so preference falls through
+// blanks. Returns `undefined` if nothing matches. `pick.compile` bakes the sources once,
+// mirroring `select.compile`, so a reused rule set compiles its selectors a single time.
+select.pick = (source, sources, options) => select.pick.compile(sources, options)(source)
+select.pick.compile = (sources, options) => {
+  const compiled = sources.map(entry => {
+    const [selector, attr = options?.attr] = Array.isArray(entry) ? entry : [entry]
+    const opts = attr === '$content' ? {...options, content: true} : options
+    return {
+      run: select.compile(selector, opts),
+      attr,
+      lower: typeof attr === 'string' ? attr.toLowerCase() : attr
+    }
+  })
+  return (source, cache) => {
+    for (const {run, attr, lower} of compiled) {
+      const tag = run(source, cache)[0]
+      if (!tag) continue
+      if (attr == null) return tag
+      const value = lookup(tag, lower, false)
+      if (value != null && value !== '') return value
+    }
+    return undefined
+  }
 }
 
 // Named shortcuts for the selectors people reach for most, each a pre-baked `select` that

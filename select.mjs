@@ -6,6 +6,7 @@ import selectImpl from './select.js'
 export default selectImpl
 export const select = selectImpl
 export const compile = selectImpl.compile
+export const pick = selectImpl.pick
 
 // Named preset shortcuts (see select.js).
 export const og = selectImpl.og

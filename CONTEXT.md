@@ -22,15 +22,17 @@ Dependencies point **down only**: nothing lower ever imports something higher.
 | layer | package | knows about | responsibility | status |
 | --- | --- | --- | --- | --- |
 | 0 · core | `hypertag` | tags + attributes | scan HTML → flat `Tag[]`. Zero-dep, edge-sized. | shipped |
-| 1 · select | `hypertag/select` | tags + selectors | narrow and read tags (selectors, presets; `pick` planned). | shipped |
+| 1 · select | `hypertag/select` | tags + selectors | narrow and read tags (selectors, presets, `pick`). | shipped |
 | 1 · sanitize | `hypertag/sanitize` | values | decode / clean / resolve values. | shipped |
-| 2 · ld | `hypertag/ld` | JSON | unwrap JSON-LD shapes. First non-HTML code. | planned |
-| 3 · rules | separate, metalink-shaped | the domain | field→source priority, `og` beats `twitter`. | planned |
+| 2 · ld | `hypertag/ld` | JSON | unwrap JSON-LD shapes. First non-HTML code. | shipped |
+| 3 · meta | `hypertag/meta` | metadata conventions + a default opinion | declarative extractor: engine + source helpers + default rules (overridable). | shipped |
+| product | separate, metalink-shaped | the network | fetch, antibot, caching, distribution. | out of library scope |
 
 **Where new code goes.** A general mechanism over tags/selectors → `select`. A value-to-
 cleaner-value transform, field-agnostic → `sanitize`. Anything operating on parsed JSON
-rather than HTML → `ld` (never core). Anything encoding which source means which field,
-or a preference between sources → the `rules` layer (never lower).
+rather than HTML → `ld` (never core). Anything encoding which source means which field, or a
+preference between sources → the `meta` layer's rules (never lower). Fetching a page, evading
+antibot, caching → the product above the library, never in it.
 
 ## Glossary
 
@@ -47,7 +49,14 @@ Use these terms – in issues, ADRs, refactor proposals, test names – rather t
 - **Mechanism vs. rules** – a *mechanism* is domain-agnostic (`pick` does preference-
   ordered first-match; the caller supplies the order). A *rule* encodes domain knowledge
   (og beats twitter; this selector means "title"). Mechanisms live low; rules live high.
-- **`pick`** – planned layer 1 mechanism: first present value across an ordered list of
-  `[selector, attr]` rules, in the caller's preference order. No metadata knowledge.
+- **`pick`** – layer 1 mechanism: first usable value across an ordered list of
+  `[selector, attr]` sources, in the caller's preference order. No metadata knowledge.
+- **Source helper** – a `meta`/`link`/`content`/`ld` marker the `meta` rules list; it encodes
+  an HTML-metadata *convention* (property≈name, `rel` word-match, element text, JSON-LD shape),
+  not a domain opinion.
+- **Parse cache** – an optional caller-owned `Map` passed to `parse` (4th arg) that memoizes
+  identical parses of the same source. It is local, not shared: create one per operation and
+  thread it down, so concurrent async operations never mix caches. The `meta` layer makes one
+  per page so the per-field re-parses of `<meta>`/`<link>` collapse to one each.
 - **Cooked value** – a normalized, domain-resolved output (a page's "title"). Producing
-  cooked values is the job of the top rules layer, not the core.
+  cooked values is the job of the `meta` layer, not the core.

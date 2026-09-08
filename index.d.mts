@@ -27,14 +27,22 @@ export interface ParseOptions {
  */
 export type Tag = Record<string, string | boolean>
 
+/** A caller-owned parse memo. Create one per operation and thread it through repeated parses. */
+export type ParseCache = Map<string, unknown>
+
 /**
  * Parse `source` and return an attribute map for every occurrence of the given
  * tag(s). Pass `'*'` to match every tag.
+ *
+ * `cache` (optional) is a caller-owned `Map` that memoizes identical parses of the same
+ * source. Create a fresh one per logical operation and thread it through repeated calls; it
+ * holds no shared or module-level state, so concurrent async operations never mix caches.
  */
 export declare function parse(
   source: string,
   tags: string | string[],
-  options?: ParseOptions
+  options?: ParseOptions,
+  cache?: ParseCache
 ): Tag[]
 
 /**

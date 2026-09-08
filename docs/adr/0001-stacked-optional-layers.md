@@ -45,16 +45,17 @@ exports (`hypertag`, `hypertag/select`, `hypertag/sanitize`, …). Three rules g
 | 0 · core | `hypertag` | tags + attributes | scan HTML → flat `Tag[]`. Zero-dep, edge-sized. |
 | 1 · select | `hypertag/select` | tags + selectors | narrow and read tags. Home of `pick`. |
 | 1 · sanitize | `hypertag/sanitize` | values | decode / clean / resolve values. |
-| 2 · ld (future) | `hypertag/ld` | JSON | unwrap JSON-LD shapes. First non-HTML code – its own layer, never core. |
-| 3 · rules (future) | separate, metalink-shaped | the domain | field→source priority, `og` beats `twitter`. The cooked-value ruleset. |
+| 2 · ld | `hypertag/ld` | JSON | unwrap JSON-LD shapes. First non-HTML code – its own layer, never core. |
+| 3 · meta | `hypertag/meta` | metadata conventions + a default opinion | declarative extractor: a domain-agnostic engine + source helpers, plus an overridable default rules table (the cooked-value ruleset). |
+| product | separate, metalink-shaped | the network | fetch, antibot, caching, distribution. Above the library. |
 
 ### Placement heuristic (how to apply this to a new utility)
 
 - General mechanism over tags/selectors, no domain knowledge → `hypertag/select`.
 - Turns a value into a cleaner value, field-agnostic → `hypertag/sanitize`.
 - Operates on parsed JSON rather than HTML → `hypertag/ld` (layer 2), not core.
-- Encodes which source means which field, or a preference between sources → the rules
-  layer (layer 3), never lower.
+- Encodes which source means which field, or a preference between sources → the `hypertag/meta`
+  rules (layer 3), never lower.
 
 ## Consequences
 

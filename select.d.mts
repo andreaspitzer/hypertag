@@ -28,6 +28,17 @@ export type Tag = Record<string, string | boolean>
 export type Preset = (source: string) => Tag[]
 
 /**
+ * One `pick` source: a selector string (read `options.attr`), or a `[selector, attr]`
+ * tuple (read `attr`; a source with no attribute yields the matched tag).
+ */
+export type PickSource = string | [selector: string, attr: string]
+
+export interface PickOptions extends ParseOptions {
+  /** Default attribute to read for bare-string sources. */
+  attr?: string
+}
+
+/**
  * Compile the CSS-like `selector` and run it against `source`.
  * Equivalent to `compile(selector, options)(source)`.
  *
@@ -56,6 +67,21 @@ export declare function compile(
   options?: ParseOptions
 ): (source: string) => Tag[]
 
+/**
+ * The first usable value across `sources`, in preference order. A source is skipped when it
+ * matches no tag, or its attribute is absent, `null`, or empty - so blanks fall through. A
+ * source with no attribute yields the matched `Tag`. Returns `undefined` if nothing matches.
+ */
+export declare function pick(
+  source: string,
+  sources: PickSource[],
+  options?: PickOptions
+): string | Tag | undefined
+export declare namespace pick {
+  /** Compile the sources once into a reusable picker, mirroring `compile`. */
+  function compile(sources: PickSource[], options?: PickOptions): (source: string) => string | Tag | undefined
+}
+
 /** OpenGraph meta tags: `meta[property^=og:]`. */
 export declare const og: Preset
 /** Twitter Card meta tags: `meta[name^=twitter:]`. */
@@ -74,7 +100,7 @@ export declare const title: Preset
 export declare const jsonld: Preset
 
 export declare namespace select {
-  export {compile, og, twitter, icons, canonical, stylesheets, alternates, title, jsonld}
+  export {compile, pick, og, twitter, icons, canonical, stylesheets, alternates, title, jsonld}
 }
 
 export default select

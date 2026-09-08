@@ -262,6 +262,24 @@ jsonld(html).map(s => JSON.parse(s.$content))        // the page's JSON-LD objec
 The full set: `og`, `twitter`, `icons`, `canonical`, `stylesheets`, `alternates`, `title`,
 `jsonld` — also reachable as `select.og(html)` etc.
 
+### pick
+
+`pick` takes an ordered list of sources and returns the first one with a usable value — the
+preference fallback (`og:title` else `twitter:title` else …) you would otherwise hand-write.
+A source is a selector (read `options.attr`) or a `[selector, attr]` pair; reading `$content`
+gets element text. Blank and missing values fall through.
+
+```js
+import {pick} from 'hypertag/select'
+
+pick(html, ['meta[property=og:title]', 'meta[name=twitter:title]'], {attr: 'content'})
+pick(html, [['meta[property=og:url]', 'content'], ['link[rel=canonical]', 'href']])  // mixed attrs
+pick(html, [['title', '$content']])   // element text
+```
+
+Unlike a comma-group `select` (which returns matches in **document** order), `pick` treats the
+**list order as preference** and returns a single value. `pick.compile(sources)` bakes it once.
+
 ## 🧼 Sanitize (opt-in)
 
 The core returns attribute values exactly as written, so HTML entities stay encoded
@@ -298,12 +316,63 @@ sanitize(parse(html, 'meta'), {decode: decodeHTML})
 credentials, `utm_*` tracking parameters, and `#:~:text=` fragment directives. It does **not**
 prettify text (no smart quotes) — hypertag returns what the page said.
 
+## 🔗 JSON-LD (opt-in)
+
+`hypertag/ld` reads the `<script type="application/ld+json">` blocks the core `content` option
+exposes and flattens them — including each block's `@graph` — into a list of plain objects.
+It is the first layer that works on JSON rather than HTML.
+
+```js
+import ld, {pick, asName, asUrl} from 'hypertag/ld'
+
+const graph = ld(html)                       // every JSON-LD object on the page
+pick(graph, 'datePublished', 'dateModified') // first present value across the graph
+asName(pick(graph, 'author'))                // coerce {name} / [{name}] shapes to a string
+asUrl(pick(graph, 'image'))                  // coerce {url} / {contentUrl} / [...] to a URL
+```
+
+A block whose body is not valid JSON is skipped, so one broken block never throws the page.
+
+## 🏷️ Metadata (opt-in)
+
+`hypertag/meta` is the top of the stack: a declarative extractor built on `select` + `ld` +
+`sanitize`. `metadata(html, url)` returns cooked fields using a default rule set:
+
+```js
+import metadata from 'hypertag/meta'
+
+metadata(html, 'https://example.com/page')
+// { title, description, image, url, author, date, publisher }
+```
+
+The engine is domain-agnostic; the rules are the only opinion, and they are **data** you can
+override. Each field lists its sources in preference order plus a normalizer (`text`, `url`,
+`raw`):
+
+```js
+import {extract, meta, link, content, ld, ldName, ldUrl} from 'hypertag/meta'
+
+const RULES = {
+  title: {text: [meta('og:title', 'twitter:title'), ld('headline', 'name'), content('title')]},
+  url:   {url:  [meta('og:url'), link('canonical'), ld('url')]}
+}
+extract(html, url, RULES)
+```
+
+`meta(...)` matches a key under **either `property` or `name`** — the two are used
+interchangeably in the wild (MDN writes its OpenGraph tags as `name=`), so this catches both.
+`extract.compile(rules)` bakes the selectors once for reuse across many pages.
+
 ## 🚫 When not to reach for hypertag
 
-hypertag is an extraction primitive, not a full parser. Its core has no CSS selectors (the
-opt-in `hypertag/select` layer above only sugars single-tag attribute filtering), no entity
-decoding (the opt-in `hypertag/sanitize` layer adds a tiny one), no DOM traversal, and it does
-not repair malformed or badly nested HTML the way a spec parser does. It does not fetch URLs; you hand it an HTML string you already have. And it is not a metadata ruleset: it returns the raw `<meta>` and `<link>` tags, not the JSON-LD, Twitter Card, and oEmbed fallbacks that tools like metascraper layer on top. If you need any of those, reach for cheerio, jsdom, or metascraper.
+hypertag is an extraction toolkit built from small layers, not a full parser. Its core has no
+CSS selectors, no entity decoding, no DOM traversal, and it does not repair malformed or badly
+nested HTML the way a spec parser does. The opt-in layers add selectors (`hypertag/select`),
+value cleanup (`hypertag/sanitize`), JSON-LD (`hypertag/ld`) and a metadata ruleset
+(`hypertag/meta`) — but always over an HTML string you already have. hypertag never fetches:
+no networked oEmbed, no headless browser for JS-rendered pages, no antibot. If you need DOM
+traversal or HTML repair, reach for cheerio or jsdom; if you need to fetch pages, render
+JavaScript, or a maintained metadata ruleset with more fallbacks, reach for metascraper.
 
 # Benchmarks 🍏🍊
 

@@ -7,11 +7,16 @@ export = parse
 /**
  * Parse `source` and return an attribute map for every occurrence of the given
  * tag(s). Pass `'*'` to match every tag.
+ *
+ * `cache` (optional) is a caller-owned `Map` that memoizes identical parses of the same
+ * source. Create a fresh one per logical operation and thread it through repeated calls; it
+ * holds no shared or module-level state, so concurrent async operations never mix caches.
  */
 declare function parse(
   source: string,
   tags: string | string[],
-  options?: parse.ParseOptions
+  options?: parse.ParseOptions,
+  cache?: parse.ParseCache
 ): parse.Tag[]
 
 declare namespace parse {
@@ -42,8 +47,11 @@ declare namespace parse {
    */
   type Tag = Record<string, string | boolean>
 
+  /** A caller-owned parse memo. Create one per operation and thread it through repeated parses. */
+  type ParseCache = Map<string, unknown>
+
   /** Alias of the default export (`require('hypertag').parse`). */
-  function parse(source: string, tags: string | string[], options?: ParseOptions): Tag[]
+  function parse(source: string, tags: string | string[], options?: ParseOptions, cache?: ParseCache): Tag[]
 
   /**
    * Parse a single HTML tag's text into an attribute map.

@@ -56,4 +56,28 @@ assert.deepStrictEqual(
   'sanitize() smoke result mismatch'
 )
 
+// The opt-in JSON-LD layer: require('hypertag/ld') is the callable graph extractor with
+// `ld`, `pick`, `asName` and `asUrl` attached.
+const ld = require('../ld.js')
+for (const name of ['ld', 'pick', 'asName', 'asUrl']) {
+  assert.strictEqual(typeof ld[name], 'function', `missing named export: ${name}`)
+}
+assert.deepStrictEqual(
+  ld('<script type="application/ld+json">{"headline":"Hi"}</script>'),
+  [{headline: 'Hi'}],
+  'ld() smoke result mismatch'
+)
+
+// The opt-in metadata layer: require('hypertag/meta') is the callable extractor with the
+// engine, source helpers and default rules attached.
+const metadata = require('../meta.js')
+for (const name of ['metadata', 'extract', 'meta', 'link', 'content', 'ld', 'ldName', 'ldUrl']) {
+  assert.strictEqual(typeof metadata[name], 'function', `missing named export: ${name}`)
+}
+assert.strictEqual(
+  metadata('<meta property="og:title" content="Hi &amp; Bye">').title,
+  'Hi & Bye',
+  'metadata() smoke result mismatch'
+)
+
 console.log('smoke: CJS require() OK')

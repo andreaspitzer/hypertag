@@ -58,4 +58,28 @@ assert.deepStrictEqual(
   'sanitize() smoke result mismatch'
 )
 
+// The opt-in JSON-LD layer: default import is the callable graph extractor, named exports resolve.
+const ldMod = await import('../ld.mjs')
+assert.strictEqual(typeof ldMod.default, 'function', 'import default must be the ld function')
+for (const name of ['ld', 'pick', 'asName', 'asUrl']) {
+  assert.strictEqual(typeof ldMod[name], 'function', `missing named export: ${name}`)
+}
+assert.deepStrictEqual(
+  ldMod.default('<script type="application/ld+json">{"headline":"Hi"}</script>'),
+  [{headline: 'Hi'}],
+  'ld() smoke result mismatch'
+)
+
+// The opt-in metadata layer: default import is the callable extractor, named exports resolve.
+const metaMod = await import('../meta.mjs')
+assert.strictEqual(typeof metaMod.default, 'function', 'import default must be the metadata function')
+for (const name of ['metadata', 'extract', 'meta', 'link', 'content', 'ld', 'ldName', 'ldUrl']) {
+  assert.strictEqual(typeof metaMod[name], 'function', `missing named export: ${name}`)
+}
+assert.strictEqual(
+  metaMod.default('<meta property="og:title" content="Hi &amp; Bye">').title,
+  'Hi & Bye',
+  'metadata() smoke result mismatch'
+)
+
 console.log('smoke: ESM import OK')

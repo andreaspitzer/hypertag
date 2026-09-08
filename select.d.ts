@@ -49,6 +49,17 @@ declare namespace select {
   /** A pre-baked selector: run it against `source`, get the matching tags back. */
   type Preset = (source: string) => Tag[]
 
+  /**
+   * One `pick` source: a selector string (read `options.attr`), or a `[selector, attr]`
+   * tuple (read `attr`; a source with no attribute yields the matched tag).
+   */
+  type PickSource = string | [selector: string, attr: string]
+
+  interface PickOptions extends ParseOptions {
+    /** Default attribute to read for bare-string sources. */
+    attr?: string
+  }
+
   /** Alias of the default export (`require('hypertag/select').select`). */
   function select(source: string, selector: string, options?: ParseOptions): Tag[]
 
@@ -58,6 +69,18 @@ declare namespace select {
    * Accepts a comma-separated selector list, which unions its groups.
    */
   function compile(selector: string, options?: ParseOptions): (source: string) => Tag[]
+
+  /**
+   * The first usable value across `sources`, in preference order. A source is skipped when
+   * it matches no tag, or its attribute is absent, `null`, or empty - so blanks fall
+   * through. A source with no attribute yields the matched `Tag`. Returns `undefined` if
+   * nothing matches.
+   */
+  function pick(source: string, sources: PickSource[], options?: PickOptions): string | Tag | undefined
+  namespace pick {
+    /** Compile the sources once into a reusable picker, mirroring `compile`. */
+    function compile(sources: PickSource[], options?: PickOptions): (source: string) => string | Tag | undefined
+  }
 
   /** OpenGraph meta tags: `meta[property^=og:]`. */
   const og: Preset
