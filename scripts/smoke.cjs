@@ -90,6 +90,14 @@ assert.strictEqual(
 const fromUrl = require('../fetch.js')
 assert.strictEqual(typeof fromUrl, 'function', 'require() default must be the fromUrl function')
 assert.strictEqual(typeof fromUrl.fromUrl, 'function', 'missing named export: fromUrl')
+
+// The opt-in oEmbed registry: require('hypertag/oembed') is the callable endpoint resolver.
+const oembedEndpoint = require('../oembed.js')
+assert.strictEqual(typeof oembedEndpoint, 'function', 'require() default must be the oembedEndpoint function')
+assert.ok(
+  oembedEndpoint('https://www.tiktok.com/@u/video/1')?.startsWith('https://www.tiktok.com/oembed'),
+  'oembedEndpoint() smoke mismatch'
+)
 fromUrl('https://ex.com/a', {
   fetch: async u => ({url: u, text: async () => '<meta property="og:title" content="Hi &amp; Bye">'})
 }).then(card => {

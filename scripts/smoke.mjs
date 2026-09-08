@@ -97,4 +97,9 @@ const card = await fetchMod.default('https://ex.com/a', {
 })
 assert.strictEqual(card.title, 'Hi & Bye', 'fromUrl() smoke result mismatch')
 
+// The opt-in oEmbed registry: default import is the callable endpoint resolver.
+const oembedMod = await import('../oembed.mjs')
+assert.strictEqual(typeof oembedMod.default, 'function', 'import default must be the oembedEndpoint function')
+assert.ok(oembedMod.default('https://www.tiktok.com/@u/video/1')?.startsWith('https://www.tiktok.com/oembed'), 'oembedEndpoint() smoke mismatch')
+
 console.log('smoke: ESM import OK')

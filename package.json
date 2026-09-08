@@ -89,6 +89,16 @@
         "default": "./fetch.js"
       }
     },
+    "./oembed": {
+      "import": {
+        "types": "./oembed.d.mts",
+        "default": "./oembed.mjs"
+      },
+      "require": {
+        "types": "./oembed.d.ts",
+        "default": "./oembed.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -116,7 +126,11 @@
     "fetch.js",
     "fetch.mjs",
     "fetch.d.ts",
-    "fetch.d.mts"
+    "fetch.d.mts",
+    "oembed.js",
+    "oembed.mjs",
+    "oembed.d.ts",
+    "oembed.d.mts"
   ],
   "engines": {
     "node": ">=18"

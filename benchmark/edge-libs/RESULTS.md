@@ -12,11 +12,12 @@ npm start           # extraction parity vs open-graph-scraper-lite, over saved f
 
 ## Two shapes, not one category
 
-- **Extract from HTML you have** (hypertag's job): `hypertag/meta`, `open-graph-scraper-lite`.
+- **Extract from HTML you have** (hypertag's core job): `hypertag/meta`, `open-graph-scraper-lite`.
   You bring the HTML; the library only parses. Apples-to-apples.
-- **Fetch + extract** (a category up): `linkpeek`, `openlink` take a *URL* and fetch it
-  themselves. hypertag deliberately does not fetch (you own fetch, caching, SSRF, antibot).
-  They're here for the honest ship-size picture, not field parity.
+- **Fetch + extract** (a category up): `linkpeek`, `openlink` take a *URL* and fetch it themselves.
+  hypertag keeps the two apart: `hypertag/meta` extracts, and fetching is a separate, thin, opt-in
+  layer (`hypertag/fetch`, ~0.1 kB over meta) you add only if you want it — so you keep control of
+  caching, SSRF and antibot. These rows are here for the ship-size picture, not field parity.
 
 ## Ship size — what you send to the edge
 
@@ -24,14 +25,14 @@ npm start           # extraction parity vs open-graph-scraper-lite, over saved f
 
 | library | ship size (gz) | vs hypertag | deps | shape |
 | --- | ---: | ---: | --- | --- |
-| openlink | 4.0 kB | 0.77x | 0 | fetch + extract |
-| **hypertag/meta** | **5.2 kB** | **1x** | **0** | extract only |
-| linkpeek | 26.9 kB | 5.2x | htmlparser2 | fetch + extract |
-| open-graph-scraper-lite | 630.8 kB | 121x | cheerio, chardet, validator | extract only |
+| openlink | 4.0 kB | 0.75x | 0 | fetch + extract |
+| **hypertag/meta** | **5.3 kB** | **1x** | **0** | extract (fetch opt-in) |
+| linkpeek | 26.9 kB | 5.1x | htmlparser2 | fetch + extract |
+| open-graph-scraper-lite | 630.8 kB | 119x | cheerio, chardet, validator | extract only |
 
-hypertag/meta ships a **21-field** card (matching openlink's field set) in 5.2 kB, 0 deps. Two
-honest reads:
-- Against the **true extraction peer** (`open-graph-scraper-lite`), hypertag is **121x smaller** –
+hypertag/meta ships a **21-field** card (a superset of openlink's extractable field set) in 5.3 kB,
+0 deps. Two honest reads:
+- Against the **true extraction peer** (`open-graph-scraper-lite`), hypertag is **119x smaller** –
   it is cheerio underneath, so "lite" still ships a full parser tree.
 - `openlink` is a hair **smaller** than hypertag/meta *and* fetches. So the honest superlative is
   scoped: hypertag is the smallest way to **extract** metadata from HTML you already have – not
@@ -50,7 +51,7 @@ Same task, 6 saved real pages, fields `{title, description, image, url}`:
 
 Identical coverage, and 23/24 identical values. The single difference is `hypertag/meta`
 returning a **cleaner** image URL – it strips the `utm_*` tracking parameters that
-`open-graph-scraper-lite` leaves on Wikipedia's `og:image`. So the 121x size win costs nothing
+`open-graph-scraper-lite` leaves on Wikipedia's `og:image`. So the 119x size win costs nothing
 in fields found or values produced.
 
 ## Speed and memory vs openlink (`npm run perf`)
@@ -61,7 +62,7 @@ same 6 saved pages. Container numbers are relative, not absolute – the ratio i
 
 | | speed | retained memory (GC forced) |
 | --- | ---: | ---: |
-| **hypertag/meta** | **~2.1x** | ~0 MB |
+| **hypertag/meta** | **~2.5x** | ~0 MB |
 | openlink (parse+extract) | 1x | ~0 MB |
 
 hypertag is ~2x faster **despite doing more per call** (JSON-LD, full entity decode, URL
