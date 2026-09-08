@@ -36,7 +36,8 @@ for (const scraper of SCRAPERS) {
 await rm(resultsDir, {recursive: true, force: true})
 await mkdir(resultsDir, {recursive: true})
 for (const [name, rows] of Object.entries(byScraper)) {
-  await writeFile(path.join(resultsDir, `${name}.json`), JSON.stringify(rows, null, 2))
+  // Slugify the scraper name for the filename: `hypertag/meta` must not become a subdirectory.
+  await writeFile(path.join(resultsDir, `${name.replace(/\//g, '-')}.json`), JSON.stringify(rows, null, 2))
 }
 
 const filled = v => v != null && v !== ''

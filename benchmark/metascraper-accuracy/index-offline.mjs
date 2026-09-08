@@ -43,7 +43,8 @@ for (const scraper of SCRAPERS) {
 rmSync(resultsDir, {recursive: true, force: true})
 mkdirSync(resultsDir, {recursive: true})
 for (const [name, rows] of Object.entries(byScraper)) {
-  writeFileSync(path.join(resultsDir, `${name}.json`), JSON.stringify(rows, null, 2))
+  // Slugify the scraper name for the filename: `hypertag/meta` must not become a subdirectory.
+  writeFileSync(path.join(resultsDir, `${name.replace(/\//g, '-')}.json`), JSON.stringify(rows, null, 2))
 }
 
 const filled = v => v != null && v !== ''

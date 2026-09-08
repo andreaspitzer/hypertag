@@ -5,7 +5,9 @@ Adapted from metascraper's own benchmark
 which fetches real pages, runs several metadata scrapers, normalizes each to a common shape,
 and dumps the results for comparison. This version:
 
-- **adds hypertag** (a hand-written rule layer over the raw tags) as a scraper,
+- **adds two hypertag entries** - `hypertag` (the raw primitive: a few hand lookups over tag
+  attributes) and `hypertag/meta` (the shipped metadata layer: `metadata(html, url)` over
+  select + ld + sanitize) - as scrapers,
 - **modernizes** the metascraper entry to the current factory API,
 - **refreshes the URLs** (the original seven were dead 2015-2016 articles),
 - swaps the original's unmaintained libraries (html-metadata, node-metainspector, unfluff) for
@@ -43,12 +45,15 @@ URLs). Missing fixtures are skipped, so you can start with a few and add more.
 
 ## Reading the results
 
-- `results/<scraper>.json` - each scraper's normalized output per page, for eyeballing.
+- `results/<scraper>.json` - each scraper's normalized output per page, for eyeballing. The
+  `hypertag/meta` scraper writes `results/hypertag-meta.json` (the slash is slugified).
 - **coverage** - how many of the `pages x 7` fields each scraper filled. metascraper draws on
-  OpenGraph, Twitter, JSON-LD and HTML text; hypertag reads tag **attributes only**.
+  OpenGraph, Twitter, JSON-LD and HTML text; `hypertag/meta` draws on the same sources via its
+  layers, while raw `hypertag` reads tag **attributes only**.
 - **agreement with metascraper** - where the others produce the identical value.
 
-The expected story: on pages whose metadata lives in tags, hypertag keeps pace; on pages where
-it lives in element **text** (a `<title>` body, a visible headline) or **JSON-LD** (author,
-date), hypertag cannot reach it and metascraper pulls ahead. That gap is the point of the
-comparison, not a bug - hypertag is an attribute reader, not a metadata ruleset.
+The story: the raw `hypertag` primitive keeps pace on tag-attribute fields but cannot reach
+metadata in element **text** (a `<title>` body) or **JSON-LD** (author, date). `hypertag/meta`
+reaches both (the `content` option + the `ld` layer), matching metascraper on title/image/url
+and closing most of the gap; what remains is the **breadth** of metascraper's per-field
+heuristics (author, date normalization), not a structural wall. See `RESULTS.md` for a run.

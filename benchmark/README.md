@@ -143,10 +143,11 @@ is reported. Four dimensions:
 
 Absolute numbers vary by machine and metascraper version; the ratios are the point. The
 footprint is the sharpest line: metascraper's 115-package tree is why it does not fit an edge
-bundle, which is exactly where hypertag is meant to run. If you need metascraper's fallbacks,
-JSON-LD, oEmbed and URL resolution, that is a different and larger job — reach for it. If you
-already have the HTML and want the OpenGraph tags out of it, hypertag does that slice for a
-rounding error of the cost.
+bundle, which is exactly where hypertag is meant to run. This script measures the narrow og-only
+slice; for the fuller job (fallbacks, JSON-LD, URL resolution) hypertag now has `hypertag/meta`,
+compared head-to-head in `bench:unified` and `metascraper-accuracy/`. What stays metascraper's
+alone is networked oEmbed and the breadth of its per-field ruleset. If you already have the HTML
+and want the OpenGraph tags out of it, hypertag does that slice for a rounding error of the cost.
 
 ### The reverse: metascraper's home turf (`bench:unified`)
 
@@ -156,19 +157,20 @@ for: resolve unified `{title, description, image, url}` on a **messy** page
 `<title>` element text, description only in `<meta name="description">`, a **relative**
 `og:image` that must be resolved to absolute, and the URL only in `<link rel="canonical">`.
 
-To compete, hypertag needs a hand-written rule layer (the fallback order + `new URL()`
-resolution, ~15 lines). The result is a coverage story, not a speed race:
+hypertag runs this with its shipped metadata layer (`hypertag/meta`): the `content` option
+reads the `<title>` text, `sanitize` decodes the description entity, and `cleanUrl` resolves
+the relative image. The result:
 
-| field | metascraper | hypertag + rule layer |
+| field | metascraper | hypertag/meta |
 | --- | --- | --- |
-| title | ✅ from `<title>` text | ❌ **unreachable** - hypertag reads attributes, not element text |
-| description | ✅ | ✅ via fallback to `name=description` |
-| image | ✅ resolved to absolute | ✅ resolved with `new URL()` |
+| title | ✅ from `<title>` text | ✅ from `<title>` text (the `content` option) |
+| description | ✅ | ✅ `name=description`, entity-decoded |
+| image | ✅ resolved to absolute | ✅ resolved with `cleanUrl` |
 | url | ✅ from canonical | ✅ from canonical |
 
-hypertag matches **3 of 4**, and on those three it is still ~85x faster and ships 115 fewer
-packages. The one it misses - `title` - is the point: metadata that lives in element **text**
-(the `<title>` body, JSON-LD inside a `<script>`, a visible `<h1>`) is structurally out of
-hypertag's reach, because it only reads tag attributes. That is the boundary. Inside it,
-hypertag wins on every axis; across it, you need a real parser, and metascraper's weight is
-what buys you the crossing.
+hypertag matches **4 of 4**, at ~20x the speed and 115 fewer packages. What was a hard boundary
+in earlier versions - metadata living in element **text** (the `<title>` body, JSON-LD inside a
+`<script>`) - is now reachable through the `content` option and the `hypertag/ld` layer. What
+metascraper's weight still buys is the **breadth** of its per-field ruleset (a much wider set of
+`author`/`date` heuristics, date normalization) and networked fallbacks - rule breadth, not a
+structural wall. See `metascraper-accuracy/RESULTS.md` for the full 7-field, 6-page comparison.

@@ -4,8 +4,16 @@
 // modernized to the current factory API, hypertag is added, and open-graph-scraper stands in
 // for the original's other libraries (html-metadata / node-metainspector / unfluff are
 // unmaintained and left out - add them back as entries here if you want them).
+//
+// Two hypertag entries, on purpose:
+//   - `hypertag` is the raw primitive: parse() plus a few lines of hand lookups over tag
+//     ATTRIBUTES only. It shows the floor - what you get before any layer, with no element
+//     text, no JSON-LD, no entity decoding.
+//   - `hypertag/meta` is the shipped metadata layer: metadata(html, url), a declarative rules
+//     table over select + ld + sanitize. It is what a consumer actually runs, and it reaches
+//     the fields that live between tags (<title> text, JSON-LD) and normalizes values.
 import parse from 'hypertag'
-import {cleanUrl, decode, sanitize} from 'hypertag/sanitize'
+import metadata from 'hypertag/meta'
 import metascraperFactory from 'metascraper'
 import metascraperAuthor from 'metascraper-author'
 import metascraperDate from 'metascraper-date'
@@ -45,10 +53,10 @@ export default [
   },
 
   {
-    // hypertag has no metadata ruleset; this is a hand-written rule layer over the raw tags -
-    // the fallback order and relative-URL resolution you would write yourself. It reads tag
-    // ATTRIBUTES only, so anything living in element TEXT (a <title> body, JSON-LD in a
-    // <script>) is unreachable, and it does not decode HTML entities.
+    // The raw primitive: a hand-written rule layer over the tag ATTRIBUTES only - the fallback
+    // order and relative-URL resolution you would write yourself with just parse(). It reads
+    // attributes, so anything living in element TEXT (a <title> body, JSON-LD in a <script>) is
+    // unreachable, and it does not decode HTML entities. This is the floor the layers build on.
     name: 'hypertag',
     async run(url, html) {
       const metas = parse(html, 'meta')
@@ -77,79 +85,14 @@ export default [
   },
 
   {
-    // Same rule layer as `hypertag`, but its output is run through hypertag/sanitize: text
-    // fields are entity-decoded + whitespace-collapsed, URL fields are decoded then cleaned
-    // (relative resolved, credentials / utm_* / #:~:text= stripped). This closes the
-    // normalization gap with metascraper; it does NOT add coverage (JSON-LD author/date and
-    // text-only titles are still out of reach - sanitize cleans values, it does not find new ones).
-    name: 'hypertag+sanitize',
+    // The shipped metadata layer: metadata(html, url) runs the default rules table over
+    // select + ld + sanitize. It reads element text (<title>) and JSON-LD (author, date, and
+    // more), matches meta keys under property OR name (real pages mix them), decodes entities,
+    // and resolves relative URLs - the same job the hand-written path did, but as one call a
+    // consumer actually ships. This is the entry to compare against metascraper.
+    name: 'hypertag/meta',
     async run(url, html) {
-      const metas = parse(html, 'meta')
-      const links = parse(html, 'link')
-      const prop = v => metas.find(m => (m.property || '').toLowerCase() === v)?.content
-      const name = v => metas.find(m => (m.name || '').toLowerCase() === v)?.content
-      const rel = v => links.find(l => (l.rel || '').toLowerCase() === v)?.href
-      const text = v => (v == null ? null : sanitize(v))
-      const link = v => (v == null ? null : cleanUrl(decode(v), url))
-      return {
-        title: text(prop('og:title') ?? name('twitter:title')),
-        description: text(prop('og:description') ?? name('description') ?? name('twitter:description')),
-        image: link(prop('og:image') ?? name('twitter:image')),
-        url: link(prop('og:url') ?? rel('canonical')),
-        author: text(name('author') ?? prop('article:author')),
-        date: prop('article:published_time') ?? name('date') ?? null,
-        publisher: text(prop('og:site_name'))
-      }
-    }
-  },
-
-  {
-    // The rule layer plus the two things the `content` option unlocks: the <title> element's
-    // text (a fallback for pages with no og:title) and JSON-LD <script> bodies (author, date,
-    // and more). This is what closes the structural gap - the fields that live between tags,
-    // not in attributes. Output is normalized through sanitize/cleanUrl like hypertag+sanitize.
-    name: 'hypertag+content',
-    async run(url, html) {
-      const metas = parse(html, 'meta')
-      const links = parse(html, 'link')
-      const prop = v => metas.find(m => (m.property || '').toLowerCase() === v)?.content
-      const name = v => metas.find(m => (m.name || '').toLowerCase() === v)?.content
-      const rel = v => links.find(l => (l.rel || '').toLowerCase() === v)?.href
-      const titleText = parse(html, 'title', {content: true})[0]?.$content
-
-      // Flatten every JSON-LD block (and its @graph) into one list of objects to pick from.
-      const ld = parse(html, 'script', {content: true})
-        .filter(s => /ld\+json/i.test(s.type ?? ''))
-        .flatMap(s => {
-          try {
-            const json = JSON.parse(s.$content)
-            return Array.isArray(json) ? json : (json['@graph'] ?? [json])
-          } catch {
-            return []
-          }
-        })
-      const ldPick = (...keys) => {
-        for (const obj of ld) {
-          for (const key of keys) {
-            if (obj?.[key] != null) return obj[key]
-          }
-        }
-        return undefined
-      }
-      const asName = x => (Array.isArray(x) ? asName(x[0]) : x && typeof x === 'object' ? x.name : x)
-      const asUrl = x => (Array.isArray(x) ? asUrl(x[0]) : x && typeof x === 'object' ? (x.url ?? x.contentUrl) : x)
-
-      const text = v => (v == null ? null : sanitize(v))
-      const link = v => (v == null ? null : cleanUrl(decode(String(v)), url))
-      return {
-        title: text(prop('og:title') ?? name('twitter:title') ?? ldPick('headline', 'name') ?? titleText),
-        description: text(prop('og:description') ?? name('description') ?? name('twitter:description') ?? ldPick('description')),
-        image: link(prop('og:image') ?? name('twitter:image') ?? asUrl(ldPick('image', 'thumbnailUrl'))),
-        url: link(prop('og:url') ?? rel('canonical') ?? ldPick('url')),
-        author: text(asName(name('author') ?? prop('article:author') ?? ldPick('author'))),
-        date: prop('article:published_time') ?? name('date') ?? ldPick('datePublished', 'dateModified', 'uploadDate') ?? null,
-        publisher: text(asName(prop('og:site_name') ?? ldPick('publisher')))
-      }
+      return metadata(html, url)
     }
   },
 

@@ -8,10 +8,11 @@
 //   image       -> og:image, but a RELATIVE url that must be resolved to absolute
 //   url         -> only in <link rel="canonical"> (no og:url)
 //
-// To compete, hypertag needs a hand-written rule layer (the fallback order + URL resolution
-// below). The honest result: it matches metascraper on the three ATTRIBUTE-sourced fields,
-// but CANNOT get `title` - hypertag reads tag attributes, not element text, so <title>Foo</title>
-// is structurally out of reach. That gap is exactly what metascraper's weight buys.
+// hypertag does this with its shipped metadata layer (hypertag/meta): the content option reads
+// the <title> element text, sanitize decodes the description entity, and cleanUrl resolves the
+// relative og:image to absolute. It matches metascraper on all four fields, at a fraction of
+// the footprint and with zero dependencies. (The old attributes-only rule layer could not reach
+// the <title> text or decode entities - the layers are exactly what closed that gap.)
 import {existsSync, readdirSync, readFileSync, statSync} from 'node:fs'
 import path from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -33,25 +34,20 @@ let sink = 0
 const median = xs => xs.slice().sort((a, b) => a - b)[xs.length >> 1]
 const fmt = n => Math.round(n).toLocaleString().padStart(10)
 
-// hypertag's unified rule layer: grab all meta/link tags, then replicate metascraper's
-// fallback order and resolve relative URLs by hand. This is the code cost of matching
-// metascraper on its own task - and it still cannot reach the <title> text.
+// hypertag's shipped metadata layer (hypertag/meta) on the same 4-field task. It uses the
+// default rules - restricted here to the four fields this benchmark scores, to match
+// metascraper's 4-plugin config - so it is the real extractor a consumer runs, not a
+// hand-written subset. The content option reads the <title> text, sanitize decodes the entity,
+// and cleanUrl resolves the relative image, so it now reaches every field.
 async function makeHypertag() {
-  const {default: parse} = await import('../hypertag.mjs')
-  return () => {
-    const metas = parse(html, 'meta')
-    const links = parse(html, 'link')
-    const prop = v => metas.find(m => (m.property || '').toLowerCase() === v)?.content
-    const name = v => metas.find(m => (m.name || '').toLowerCase() === v)?.content
-    const rel = v => links.find(l => (l.rel || '').toLowerCase() === v)?.href
-    const abs = u => (u == null ? undefined : new URL(u, PAGE_URL).href)
-    return {
-      title: prop('og:title') ?? name('twitter:title'), // no access to <title> element text
-      description: prop('og:description') ?? name('description') ?? name('twitter:description'),
-      image: abs(prop('og:image') ?? name('twitter:image')),
-      url: prop('og:url') ?? rel('canonical')
-    }
-  }
+  const {extract, rules} = await import('../meta.mjs')
+  const run = extract.compile({
+    title: rules.title,
+    description: rules.description,
+    image: rules.image,
+    url: rules.url
+  })
+  return () => run(html, PAGE_URL)
 }
 
 async function makeMetascraper() {
@@ -104,15 +100,14 @@ for (const [name, t] of Object.entries(tally)) {
   console.log(`  ${name.padEnd(12)} ${t.correct} correct, ${t.incorrect} incorrect, ${t.missed} missed`)
 }
 console.log()
-console.log('  hypertag `title` is MISSED: it lives in the <title> element text, which hypertag')
-console.log('  cannot read (attributes only) - structurally out of reach, not just harder.')
-console.log('  hypertag `description` is INCORRECT: the raw attribute holds "&amp;" and hypertag')
-console.log('  returns it literally, while metascraper decodes HTML entities (via cheerio).')
-console.log('  Both are jobs the minimal hand-written rule layer does not do for you.\n')
+console.log('  hypertag/meta matches all four fields: `title` from the <title> element text (the')
+console.log('  content option), `description` entity-decoded (sanitize), and the relative `image`')
+console.log('  resolved to absolute (cleanUrl) - the fields the attributes-only path could not reach.\n')
 
 await speed()
 footprint()
-console.log('\ncold start / memory: same libraries as `bench:og`, so unchanged there')
+console.log('\ncold start / memory: hypertag now loads its meta layer (core + select + ld + sanitize,')
+console.log('a few extra kB over `bench:og`); metascraper is unchanged, so the gap is the same order.')
 console.log(`(checksum ${sink})`)
 
 async function speed() {
@@ -148,17 +143,23 @@ async function opsPerSec(task, {warmupMs = 250, sampleMs = 400, samples = 7} = {
   return median(out)
 }
 
-// Install footprint (same closure walk as og-vs-metascraper.mjs). hypertag's unified path
-// uses only the core parser, still zero dependencies.
+// Install footprint (same closure walk as og-vs-metascraper.mjs). hypertag's unified path now
+// uses the shipped metadata layer, which pulls in core + select + ld + sanitize - still one
+// package, still zero dependencies.
 function footprint() {
   console.log('install footprint (dependency closure, approximate):')
-  const hypertagFiles = ['hypertag.js', 'hypertag.mjs', 'package.json', 'README.md', 'LICENSE', 'index.d.ts', 'index.d.mts']
+  const hypertagFiles = [
+    'hypertag.js', 'hypertag.mjs', 'select.js', 'select.mjs', 'ld.js', 'ld.mjs',
+    'sanitize.js', 'sanitize.mjs', 'meta.js', 'meta.mjs', 'package.json', 'README.md', 'LICENSE',
+    'index.d.ts', 'index.d.mts', 'select.d.ts', 'select.d.mts', 'ld.d.ts', 'ld.d.mts',
+    'sanitize.d.ts', 'sanitize.d.mts', 'meta.d.ts', 'meta.d.mts'
+  ]
   let bytes = 0
   for (const f of hypertagFiles) {
     const p = path.join(benchDir, '..', f)
     if (existsSync(p)) bytes += statSync(p).size
   }
-  report('hypertag', 1, bytes, '0 deps, core parser only')
+  report('hypertag', 1, bytes, '0 deps, core + select + ld + sanitize + meta')
 
   const roots = ['metascraper', 'metascraper-title', 'metascraper-description', 'metascraper-image', 'metascraper-url']
   const dirs = closure(roots, path.join(benchDir, 'node_modules'))
