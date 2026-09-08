@@ -88,3 +88,32 @@ exports (`hypertag`, `hypertag/select`, `hypertag/sanitize`, …). Three rules g
   general mechanisms (`pick`, null-tolerant `sanitize`) that every consumer rewrites the
   same way. Accepted, deliberately, for *domain rules* – consumers should own their own
   field-to-source priorities rather than inherit ours.
+
+## Amendment (2026-09-08): a thin, opt-in fetch layer
+
+The decision above placed *all* fetching outside the library ("fetch, antibot, caching → the
+product above the library, never in it"). We are softening that in exactly one, bounded way.
+
+The reasoning that put the network out of scope was "don't let hypertag become a scraper –
+don't grow dependencies or own antibot/caching." That reasoning is intact. But it over-reached
+on one point: on every target runtime `fetch` is now **native**, so the happy path of "URL in,
+card out" is a few lines of dependency-free glue. Leaving even that to every consumer forces
+them all to rewrite the same wrapper, while a competitor's one-call API (openlink's
+`preview(url)`) looks simpler for no real gain.
+
+So we add exactly one exception: **`hypertag/fetch`** (layer 4, above `meta`), whose `fromUrl(url,
+options?)` fetches with the runtime's native `fetch` and runs `metadata()` on the body. It is held
+to the same principle that motivated keeping the network out — **the library never owns the
+network's hard parts**:
+
+- **Opt-in.** A separate import; the core and every extraction layer stay HTML-in and never fetch.
+- **Thin.** Native `fetch` + `metadata()`, zero dependencies (~0.1 kB over `meta`).
+- **Pluggable at the hard parts.** Non-UTF-8 decoding, SSRF/target validation, caching, antibot
+  and rate-limiting are documented as the caller's and supplied by passing your own `fetch`. The
+  layer applies none of them itself, by design.
+
+This supersedes the absolute "never in the library" line **for the happy path of fetching only**.
+Antibot, caching, distribution, and the encoding/SSRF hard parts remain out of scope (or
+pluggable), so the guarantee this ADR exists to protect — hypertag stays an extraction primitive,
+not a networked scraper — is preserved. The placement heuristic gains one line: *the happy path of
+fetching a URL → `hypertag/fetch`; the network's hard parts → still the caller's, never baked in.*
