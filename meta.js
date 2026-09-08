@@ -111,11 +111,12 @@ extract.compile = ruleset => {
     })
     return {field, normalize: normalizers[type], sources: compiled}
   })
-  return (source, url) => {
-    // One parse memo, plus a meta/link index and a JSON-LD graph - all local to this call and
-    // built lazily, at most once per page. Being local (not shared), concurrent extractions
-    // never mix state.
-    const cache = new Map()
+  return (source, url, cache) => {
+    // One parse memo (created here, or supplied by metadata() so its favicon and oembed scans
+    // share it), plus a meta/link index and a JSON-LD graph, all built lazily and at most once
+    // per page. Being local to the operation (not shared globally), concurrent extractions never
+    // mix state.
+    cache ??= new Map()
     let metaIndex
     let linkIndex
     let graph
@@ -150,6 +151,9 @@ extract.compile = ruleset => {
 // rules source can do, so favicons live as their own functions and metadata() calls them.
 const iconLinks = select.compile('link[rel*=icon]')
 
+// `cache`, when metadata() threads one in, is the same per-page parse memo the engine uses, so
+// the favicon's link scan reuses the one already done for the card (no extra pass).
+
 // Rank an icon: SVG or sizes="any" first (scales to anything), then the largest declared raster
 // size, then apple-touch-icon (conventionally 180px), then 0. Ties keep document order (stable sort).
 function iconScore(icon) {
@@ -163,8 +167,8 @@ function iconScore(icon) {
 // Every icon the page declares (`<link rel*=icon>`), resolved against `url` and ranked best-first.
 // Monochrome `mask-icon` (a Safari pinned-tab glyph, not a preview icon) and hrefless links are
 // dropped. Returns `{url, rel, sizes, type}` objects.
-function favicons(source, url) {
-  return iconLinks(source)
+function favicons(source, url, cache) {
+  return iconLinks(source, cache)
     .map(tag => ({
       url: typeof tag.href === 'string' ? cleanUrl(decode(tag.href), url) : undefined,
       rel: tag.rel.toLowerCase(), // always a string: a link matched by rel*=icon has a rel value
@@ -181,8 +185,8 @@ function favicons(source, url) {
 
 // The single best favicon URL. Falls back to `/favicon.ico` at the origin when the page declares
 // no icon (the browser default), or `null` when there is nothing and no `url` to resolve against.
-function favicon(source, url) {
-  const best = favicons(source, url)[0]
+function favicon(source, url, cache) {
+  const best = favicons(source, url, cache)[0]
   if (best) return best.url
   try {
     return url == null ? null : new URL('/favicon.ico', url).href
@@ -215,24 +219,39 @@ const rules = {
   audio: {url: [meta('og:audio', 'og:audio:secure_url')]}
 }
 
-// ---- batteries-included entry: metadata(source, url) uses the default rules ----------------
-// With the default rules it also adds a best-effort `icon` (the best favicon, /favicon.ico
-// fallback included) - a common link-preview field the declarative rules can't express. Pass a
-// custom `ruleset` to run the pure engine instead (no icon; you control the fields).
+// ---- batteries-included entry: metadata(source, url, options?) uses the default rules ---------
+// With the default rules it also adds a best-effort `icon`, `domain`, `lang` and `contentType`,
+// which the declarative rules can't express. `options`:
+//   - `rules`           run the pure engine with your own rules table instead (no icon/... fields);
+//   - `oembedDiscovery` also add `oembedUrl`, the page's oEmbed discovery endpoint (a
+//     `<link type=application/json+oembed>`). It only EXTRACTS the URL - it fetches nothing. Off by
+//     default: a preview card already has title/image/description from the OG tags, so this is only
+//     worth it when you want the embed markup (fetch `oembedUrl` with hypertag/fetch's `oembed()`),
+//     or for URLs you can't scrape at all (hypertag/oembed's registry).
 const runDefault = extract.compile(rules)
-function metadata(source, url, ruleset) {
+function metadata(source, url, options = {}) {
+  const {rules: ruleset, oembedDiscovery = false} = options
   if (ruleset) {
     return extract(source, url, ruleset)
   }
-  const result = runDefault(source, url)
-  // Fields the declarative rules can't express cheaply: the ranked favicon, the URL host, the
-  // page language (from <html lang> via an early-exit scan, else the og:locale language), and a
-  // coarse content type derived from the fields above.
-  result.icon = favicon(source, url)
+  // One parse memo shared across the engine, the favicon scan and the oembed lookup, so the whole
+  // card is built from a single scan of each tag type.
+  const cache = new Map()
+  const result = runDefault(source, url, cache)
+  result.icon = favicon(source, url, cache)
   result.domain = hostname(result.url ?? url)
   result.lang = langOf(source) ?? (result.locale ? result.locale.split(/[-_]/)[0] : null)
+  if (oembedDiscovery) result.oembedUrl = oembedOf(source, url, cache)
   result.contentType = contentType(result)
   return result
+}
+
+// The page's oEmbed discovery endpoint (a `<link>` of type `application/json+oembed`), resolved
+// against the page URL, or null when the page advertises none. Off by default (see metadata()).
+const oembedLink = select.compile('link[type=application/json+oembed]')
+function oembedOf(source, url, cache) {
+  const tag = oembedLink(source, cache)[0]
+  return tag && typeof tag.href === 'string' ? cleanUrl(decode(tag.href), url) : null
 }
 
 // The host of the resolved page URL (falling back to the base), or null when neither parses.

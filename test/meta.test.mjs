@@ -45,6 +45,21 @@ test('metadata() with default rules resolves every field', t => {
   })
 })
 
+test('oembedUrl: off by default, added only with {oembedDiscovery: true}', t => {
+  const html = `
+    <link rel="alternate" media="handheld" href="https://ex.com/m">
+    <link rel="alternate" type="text/xml+oembed" href="https://ex.com/oembed.xml?url=x">
+    <link rel="alternate" type="application/json+oembed" href="https://ex.com/oembed.json?url=x&amp;format=json">
+  `
+  t.false('oembedUrl' in metadata(html, base)) // off by default
+  t.is(
+    metadata(html, base, {oembedDiscovery: true}).oembedUrl,
+    'https://ex.com/oembed.json?url=x&format=json' // decoded, xml ignored
+  )
+  t.is(metadata('<link rel="alternate" href="/m">', base, {oembedDiscovery: true}).oembedUrl, null) // no json+oembed link
+  t.is(metadata('<link type="application/json+oembed">', base, {oembedDiscovery: true}).oembedUrl, null) // hrefless link
+})
+
 test('metadata() extracts the wide card when the tags are present', t => {
   const html = `
     <html lang="en-GB">
@@ -253,7 +268,7 @@ test('metadata() includes a best-effort icon field', t => {
 
 test('the default rules table is exported and overridable', t => {
   t.truthy(rules.title)
-  // Passing a custom table to metadata() uses it instead of the default.
+  // Passing {rules} to metadata() runs the pure engine with them instead of the default.
   const only = {title: {text: [meta('og:title')]}}
-  t.deepEqual(metadata('<meta property="og:title" content="X">', base, only), {title: 'X'})
+  t.deepEqual(metadata('<meta property="og:title" content="X">', base, {rules: only}), {title: 'X'})
 })

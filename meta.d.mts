@@ -17,11 +17,20 @@ export type FieldRule = {[K in Normalizer]?: Source[]}
 /** A rules table: field name → field rule. */
 export type Rules = Record<string, FieldRule>
 
+/** Options for the default-card entry point. */
+export interface Options {
+  /** Run the pure engine with these rules instead of the default card (no icon/domain/... ). */
+  rules?: Rules
+  /** Also extract the page's oEmbed discovery endpoint into `oembedUrl` (fetches nothing). Off by default. */
+  oembedDiscovery?: boolean
+}
+
 /**
- * Extract metadata from `source` using the default rules (or `rules`, if given). `url` is the
- * page URL, used as the base for resolving relative URL fields.
+ * Extract metadata from `source` using the default rules. `url` is the page URL, used as the base
+ * for resolving relative URL fields. `options.rules` runs the pure engine with your own rules
+ * instead; `options.oembed` also adds the page's oEmbed discovery URL (off by default).
  */
-export declare function metadata(source: string, url?: string, rules?: Rules): Metadata
+export declare function metadata(source: string, url?: string, options?: Options): Metadata
 
 /** The engine: extract with an explicit rules table. */
 export declare function extract(source: string, url: string | undefined, rules: Rules): Metadata

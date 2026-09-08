@@ -3,12 +3,21 @@
 export = metadata
 
 /**
- * Extract metadata from `source` using the default rules (or `rules`, if given). `url` is the
- * page URL, used as the base for resolving relative URL fields.
+ * Extract metadata from `source` using the default rules. `url` is the page URL, used as the base
+ * for resolving relative URL fields. `options.rules` runs the pure engine with your own rules
+ * instead; `options.oembed` also adds the page's oEmbed discovery URL (off by default).
  */
-declare function metadata(source: string, url?: string, rules?: metadata.Rules): metadata.Metadata
+declare function metadata(source: string, url?: string, options?: metadata.Options): metadata.Metadata
 
 declare namespace metadata {
+  /** Options for the default-card entry point. */
+  interface Options {
+    /** Run the pure engine with these rules instead of the default card (no icon/domain/... ). */
+    rules?: Rules
+    /** Also extract the page's oEmbed discovery endpoint into `oembedUrl` (fetches nothing). Off by default. */
+    oembedDiscovery?: boolean
+  }
+
   /** The extracted fields. A field with no matching source is `null`. */
   type Metadata = Record<string, string | null>
 
@@ -27,7 +36,7 @@ declare namespace metadata {
   type Rules = Record<string, FieldRule>
 
   /** Alias of the default export. */
-  function metadata(source: string, url?: string, rules?: Rules): Metadata
+  function metadata(source: string, url?: string, options?: Options): Metadata
 
   /** The engine: extract with an explicit rules table. */
   function extract(source: string, url: string | undefined, rules: Rules): Metadata
