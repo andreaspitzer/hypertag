@@ -103,7 +103,7 @@ them all to rewrite the same wrapper, while a competitor's one-call API (openlin
 
 So we add exactly one exception: **`hypertag/fetch`** (layer 4, above `meta`), whose `fromUrl(url,
 options?)` fetches with the runtime's native `fetch` and runs `metadata()` on the body. It is held
-to the same principle that motivated keeping the network out — **the library never owns the
+to the same principle that motivated keeping the network out – **the library never owns the
 network's hard parts**:
 
 - **Opt-in.** A separate import; the core and every extraction layer stay HTML-in and never fetch.
@@ -114,6 +114,6 @@ network's hard parts**:
 
 This supersedes the absolute "never in the library" line **for the happy path of fetching only**.
 Antibot, caching, distribution, and the encoding/SSRF hard parts remain out of scope (or
-pluggable), so the guarantee this ADR exists to protect — hypertag stays an extraction primitive,
-not a networked scraper — is preserved. The placement heuristic gains one line: *the happy path of
+pluggable), so the guarantee this ADR exists to protect – hypertag stays an extraction primitive,
+not a networked scraper – is preserved. The placement heuristic gains one line: *the happy path of
 fetching a URL → `hypertag/fetch`; the network's hard parts → still the caller's, never baked in.*

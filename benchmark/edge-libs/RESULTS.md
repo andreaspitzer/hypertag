@@ -16,10 +16,10 @@ npm start           # extraction parity vs open-graph-scraper-lite, over saved f
   You bring the HTML; the library only parses. Apples-to-apples.
 - **Fetch + extract** (a category up): `linkpeek`, `openlink` take a *URL* and fetch it themselves.
   hypertag keeps the two apart: `hypertag/meta` extracts, and fetching is a separate, thin, opt-in
-  layer (`hypertag/fetch`, ~0.1 kB over meta) you add only if you want it — so you keep control of
+  layer (`hypertag/fetch`, ~0.1 kB over meta) you add only if you want it – so you keep control of
   caching, SSRF and antibot. These rows are here for the ship-size picture, not field parity.
 
-## Ship size — what you send to the edge
+## Ship size – what you send to the edge
 
 `esbuild --bundle --minify`, esm, gzipped, Node built-ins external:
 
@@ -46,7 +46,7 @@ Same task, 6 saved real pages, fields `{title, description, image, url}`:
 
 | | coverage (max 24) | agreement |
 | --- | ---: | ---: |
-| hypertag/meta | 23 / 24 | — |
+| hypertag/meta | 23 / 24 | – |
 | open-graph-scraper-lite | 23 / 24 | 23 / 24 identical |
 
 Identical coverage, and 23/24 identical values. The single difference is `hypertag/meta`

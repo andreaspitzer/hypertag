@@ -19,10 +19,10 @@ rules govern how it grows (see ADR-0001 for the reasoning and the alternatives r
 
 Dependencies point **down only**: nothing lower ever imports something higher.
 
-Every layer up to and including `meta` is **HTML-in, string-only** — it takes markup you already
+Every layer up to and including `meta` is **HTML-in, string-only** – it takes markup you already
 have and never reaches outside the process. `fetch` (layer 4) is the single, deliberate exception:
 an opt-in convenience that touches the network. It is bounded by the same principle that kept the
-network out to begin with — **the library never owns the network's hard parts**. It does the happy
+network out to begin with – **the library never owns the network's hard parts**. It does the happy
 path (native `fetch` → `metadata()`) and delegates encoding, SSRF, caching, antibot and
 rate-limiting back to the caller via a pluggable `fetch`. See ADR-0001's amendment.
 
@@ -36,13 +36,13 @@ rate-limiting back to the caller via a pluggable `fetch`. See ADR-0001's amendme
 | 2 · ld | `hypertag/ld` | JSON | unwrap JSON-LD shapes. First non-HTML code. | shipped |
 | 3 · meta | `hypertag/meta` | metadata conventions + a default opinion | declarative extractor: engine + source helpers + default rules (overridable). | shipped |
 | 4 · fetch | `hypertag/fetch` | the network, thinly | opt-in convenience: fetch a URL with native `fetch` → `metadata()`. Happy path only. | shipped |
-| product | separate, metalink-shaped | the hard parts of the network | antibot, caching, distribution, and the hard parts of fetching (non-UTF-8 decoding, SSRF, rate-limiting) — pluggable into the fetch layer, never baked in. | out of library scope |
+| product | separate, metalink-shaped | the hard parts of the network | antibot, caching, distribution, and the hard parts of fetching (non-UTF-8 decoding, SSRF, rate-limiting) – pluggable into the fetch layer, never baked in. | out of library scope |
 
 **Where new code goes.** A general mechanism over tags/selectors → `select`. A value-to-
 cleaner-value transform, field-agnostic → `sanitize`. Anything operating on parsed JSON
 rather than HTML → `ld` (never core). Anything encoding which source means which field, or a
 preference between sources → the `meta` layer's rules (never lower). The *happy path* of fetching
-(native `fetch` → `metadata()`) → the `fetch` layer, kept thin. The *hard parts* of the network —
+(native `fetch` → `metadata()`) → the `fetch` layer, kept thin. The *hard parts* of the network –
 non-UTF-8 decoding, SSRF policy, caching, antibot, rate-limiting → stay pluggable and the caller's
 (pass your own `fetch`), never baked into the library.
 
