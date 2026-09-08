@@ -17,6 +17,8 @@ export interface Options {
   fetch?: (input: string, init?: unknown) => Promise<FetchResponse>
   /** A custom metadata rules table forwarded to `metadata()`. */
   rules?: Rules
+  /** Also add the page's oEmbed discovery endpoint (`oembedUrl`) to the card (forwarded to `metadata()`). */
+  oembedDiscovery?: boolean
   /** Any other option passes through to fetch as request init (headers, signal, method, ...). */
   [option: string]: unknown
 }
@@ -28,5 +30,11 @@ export interface Options {
  * non-UTF-8 decoding or target validation.
  */
 export declare function fromUrl(url: string, options?: Options): Promise<Metadata>
+
+/**
+ * Fetch and parse an oEmbed endpoint - the URL a page advertises via `<link rel oembed>`, exposed
+ * as the `oembed` field on the metadata card - and return its JSON payload.
+ */
+export declare function oembed(endpoint: string, options?: Options): Promise<unknown>
 
 export default fromUrl

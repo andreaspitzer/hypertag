@@ -5,3 +5,4 @@ import fromUrlImpl from './fetch.js'
 
 export default fromUrlImpl
 export const fromUrl = fromUrlImpl
+export const oembed = fromUrlImpl.oembed

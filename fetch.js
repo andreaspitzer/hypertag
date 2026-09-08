@@ -19,10 +19,10 @@
 const metadata = require('./meta.js')
 
 module.exports = fromUrl
-Object.assign(module.exports, {fromUrl})
+Object.assign(module.exports, {fromUrl, oembed})
 
 async function fromUrl(url, options = {}) {
-  const {fetch = globalThis.fetch, rules, ...init} = options
+  const {fetch = globalThis.fetch, rules, oembedDiscovery, ...init} = options
   if (typeof fetch !== 'function') {
     throw new TypeError('hypertag/fetch: no fetch available - pass options.fetch')
   }
@@ -31,5 +31,19 @@ async function fromUrl(url, options = {}) {
   // throw on it. An empty body then yields an all-null card rather than an exception, matching
   // the parser's "malformed input -> fewer results, never throws" contract.
   const html = (await response.text()) || ''
-  return metadata(html, response.url || url, rules)
+  return metadata(html, response.url || url, {rules, oembedDiscovery})
+}
+
+// Fetch and parse an oEmbed endpoint - the URL a page advertises via <link rel oembed>, exposed
+// as the `oembed` field on the metadata card - and return the provider's oEmbed JSON payload.
+// Same pluggability as fromUrl. Discovery (the endpoint URL) is free extraction; this is the one
+// opt-in round-trip that gets the rich embed. Providers that do NOT self-advertise (some social
+// SPAs) are out of scope here - resolve their endpoint yourself and pass it in.
+async function oembed(endpoint, options = {}) {
+  const {fetch = globalThis.fetch, ...init} = options
+  if (typeof fetch !== 'function') {
+    throw new TypeError('hypertag/fetch: no fetch available - pass options.fetch')
+  }
+  const response = await fetch(endpoint, {redirect: 'follow', headers: {accept: 'application/json'}, ...init})
+  return response.json()
 }

@@ -2,6 +2,7 @@ import test from 'ava'
 import fromUrl from '../fetch.js'
 import metaDefault from '../meta.js'
 
+const {oembed} = fromUrl
 const {meta} = metaDefault
 
 const PAGE = '<head><meta property="og:title" content="Hi &amp; bye"><meta property="og:image" content="/img.png"></head>'
@@ -60,6 +61,32 @@ test('defaults to the global fetch and to empty options', async t => {
   try {
     const card = await fromUrl('https://example.com/g') // no options at all
     t.is(card.title, 'Hi & bye')
+  } finally {
+    globalThis.fetch = original
+  }
+})
+
+test('oembed() fetches and returns the endpoint JSON, forwarding init', async t => {
+  let seen
+  const fetch = async (u, init) => {
+    seen = {u, init}
+    return {json: async () => ({type: 'video', html: '<iframe>'})}
+  }
+  const data = await oembed('https://ex.com/oembed.json?url=x', {fetch, headers: {'x-k': '1'}})
+  t.deepEqual(data, {type: 'video', html: '<iframe>'})
+  t.is(seen.u, 'https://ex.com/oembed.json?url=x')
+  t.is(seen.init.headers['x-k'], '1') // caller headers override the default accept
+})
+
+test('oembed() throws a TypeError when no fetch is available', async t => {
+  await t.throwsAsync(() => oembed('https://ex.com/oembed.json', {fetch: null}), {instanceOf: TypeError})
+})
+
+test('oembed() defaults to the global fetch', async t => {
+  const original = globalThis.fetch
+  globalThis.fetch = async () => ({json: async () => ({ok: true})})
+  try {
+    t.deepEqual(await oembed('https://ex.com/oembed.json'), {ok: true})
   } finally {
     globalThis.fetch = original
   }
