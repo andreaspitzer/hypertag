@@ -71,7 +71,7 @@ assert.deepStrictEqual(
 // The opt-in metadata layer: require('hypertag/meta') is the callable extractor with the
 // engine, source helpers and default rules attached.
 const metadata = require('../meta.js')
-for (const name of ['metadata', 'extract', 'meta', 'link', 'content', 'ld', 'ldName', 'ldUrl']) {
+for (const name of ['metadata', 'extract', 'meta', 'link', 'content', 'ld', 'ldName', 'ldUrl', 'favicon', 'favicons']) {
   assert.strictEqual(typeof metadata[name], 'function', `missing named export: ${name}`)
 }
 assert.strictEqual(
@@ -79,5 +79,20 @@ assert.strictEqual(
   'Hi & Bye',
   'metadata() smoke result mismatch'
 )
+assert.strictEqual(
+  metadata.favicon('<link rel="apple-touch-icon" href="/a.png">', 'https://ex.com/'),
+  'https://ex.com/a.png',
+  'favicon() smoke mismatch'
+)
 
-console.log('smoke: CJS require() OK')
+// The opt-in fetch layer: require('hypertag/fetch') is the callable fromUrl helper. Drive it
+// with a stub fetch so the smoke needs no network.
+const fromUrl = require('../fetch.js')
+assert.strictEqual(typeof fromUrl, 'function', 'require() default must be the fromUrl function')
+assert.strictEqual(typeof fromUrl.fromUrl, 'function', 'missing named export: fromUrl')
+fromUrl('https://ex.com/a', {
+  fetch: async u => ({url: u, text: async () => '<meta property="og:title" content="Hi &amp; Bye">'})
+}).then(card => {
+  assert.strictEqual(card.title, 'Hi & Bye', 'fromUrl() smoke result mismatch')
+  console.log('smoke: CJS require() OK')
+})

@@ -1,22 +1,25 @@
 {
   "name": "hypertag",
   "version": "0.1.0",
-  "description": "Tiny zero-dependency HTML parser: read tag attributes from an HTML string with a getElementsByTagName that needs no DOM. Runs on Node, Deno, Bun and the edge.",
+  "description": "The fastest, smallest, lowest-memory way to pull tags, meta and OpenGraph out of HTML: no DOM, zero dependencies, ~0.8 kB. Runs on Node, Deno, Bun and Cloudflare Workers.",
   "keywords": [
-    "html-parser",
-    "parse-html",
-    "html",
-    "parser",
-    "meta-tags",
-    "meta",
+    "opengraph",
     "open-graph",
     "og",
-    "opengraph",
-    "scraper",
-    "attributes",
-    "favicon",
+    "og-image",
+    "link-preview",
+    "html-metadata",
+    "metadata",
+    "meta-tags",
+    "meta",
     "cloudflare-workers",
-    "getElementsByTagName"
+    "edge",
+    "deno",
+    "bun",
+    "html-parser",
+    "html",
+    "parser",
+    "favicon"
   ],
   "author": "Andreas Pitzer <hopster@gmail.com> (https://github.com/andreaspitzer)",
   "repository": "andreaspitzer/hypertag",
@@ -76,6 +79,16 @@
         "default": "./meta.js"
       }
     },
+    "./fetch": {
+      "import": {
+        "types": "./fetch.d.mts",
+        "default": "./fetch.mjs"
+      },
+      "require": {
+        "types": "./fetch.d.ts",
+        "default": "./fetch.js"
+      }
+    },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
@@ -99,7 +112,11 @@
     "meta.js",
     "meta.mjs",
     "meta.d.ts",
-    "meta.d.mts"
+    "meta.d.mts",
+    "fetch.js",
+    "fetch.mjs",
+    "fetch.d.ts",
+    "fetch.d.mts"
   ],
   "engines": {
     "node": ">=18"

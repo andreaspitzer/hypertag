@@ -73,7 +73,7 @@ assert.deepStrictEqual(
 // The opt-in metadata layer: default import is the callable extractor, named exports resolve.
 const metaMod = await import('../meta.mjs')
 assert.strictEqual(typeof metaMod.default, 'function', 'import default must be the metadata function')
-for (const name of ['metadata', 'extract', 'meta', 'link', 'content', 'ld', 'ldName', 'ldUrl']) {
+for (const name of ['metadata', 'extract', 'meta', 'link', 'content', 'ld', 'ldName', 'ldUrl', 'favicon', 'favicons']) {
   assert.strictEqual(typeof metaMod[name], 'function', `missing named export: ${name}`)
 }
 assert.strictEqual(
@@ -81,5 +81,20 @@ assert.strictEqual(
   'Hi & Bye',
   'metadata() smoke result mismatch'
 )
+assert.strictEqual(
+  metaMod.favicon('<link rel="apple-touch-icon" href="/a.png">', 'https://ex.com/'),
+  'https://ex.com/a.png',
+  'favicon() smoke mismatch'
+)
+
+// The opt-in fetch layer: default import is the callable fromUrl helper. Drive it with a stub
+// fetch so the smoke needs no network.
+const fetchMod = await import('../fetch.mjs')
+assert.strictEqual(typeof fetchMod.default, 'function', 'import default must be the fromUrl function')
+assert.strictEqual(typeof fetchMod.fromUrl, 'function', 'missing named export: fromUrl')
+const card = await fetchMod.default('https://ex.com/a', {
+  fetch: async u => ({url: u, text: async () => '<meta property="og:title" content="Hi &amp; Bye">'})
+})
+assert.strictEqual(card.title, 'Hi & Bye', 'fromUrl() smoke result mismatch')
 
 console.log('smoke: ESM import OK')
