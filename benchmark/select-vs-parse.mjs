@@ -29,6 +29,21 @@ const tasks = [
     selector: 'meta[property^=og:]',
     baseline: () =>
       parse(html, 'meta').filter(({property}) => typeof property === 'string' && property.startsWith('og:'))
+  },
+  {
+    // A comma selector list. It compiles to ONE parse over the union of the groups' tags,
+    // then a predicate that keeps an element when any one whole group matches it (that
+    // group's tag AND its conditions). The hand-written equivalent is exactly that single
+    // union pass - not two separate parse().filter() scans - so `compiled` should again land
+    // on baseline, and the list saves the extra document scan two separate selects would cost.
+    name: 'link[rel=alternate], meta[property^=og:]  (selector list)',
+    selector: 'link[rel=alternate], meta[property^=og:]',
+    baseline: () =>
+      parse(html, ['link', 'meta']).filter(
+        el =>
+          (el.$tag === 'link' && el.rel === 'alternate') ||
+          (el.$tag === 'meta' && typeof el.property === 'string' && el.property.startsWith('og:'))
+      )
   }
 ]
 
