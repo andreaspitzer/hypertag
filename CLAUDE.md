@@ -2,6 +2,10 @@
 
 Tiny zero-dependency HTML tag and attribute parser.
 
+## Architecture
+
+Layered, optional utility stack: a small fast core with opt-in layers above it, dependencies pointing down only. See `CONTEXT.md` and `docs/adr/0001-stacked-optional-layers.md`.
+
 ## Agent skills
 
 ### Issue tracker
