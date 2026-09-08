@@ -36,6 +36,8 @@ export declare function meta(...keys: string[]): Source
 export declare function link(...rels: string[]): Source
 /** An element's text content (e.g. `content('title')`). */
 export declare function content(...tags: string[]): Source
+/** Any attribute of a matched tag, e.g. `attr('html', 'lang')` reads `<html lang>`. */
+export declare function attr(selector: string, attribute: string): Source
 /** A JSON-LD value for any of `keys`. */
 export declare function ld(...keys: string[]): Source
 /** A JSON-LD value, coerced from a person/organization shape to a name. */
@@ -43,11 +45,32 @@ export declare function ldName(...keys: string[]): Source
 /** A JSON-LD value, coerced from an image/URL shape to a URL. */
 export declare function ldUrl(...keys: string[]): Source
 
+/** One declared favicon, resolved against the page URL. */
+export interface Icon {
+  url: string
+  rel: string
+  sizes: string
+  type: string
+}
+
+/**
+ * Every `<link rel*=icon>` the page declares, resolved against `url` and ranked best-first
+ * (SVG / `sizes="any"`, then largest raster, then apple-touch-icon). Monochrome `mask-icon`
+ * and hrefless links are dropped.
+ */
+export declare function favicons(source: string, url?: string): Icon[]
+
+/**
+ * The single best favicon URL, falling back to `/favicon.ico` at the origin when the page
+ * declares none, or `null` when there is nothing and no `url` to resolve against.
+ */
+export declare function favicon(source: string, url?: string): string | null
+
 /** The default (overridable) rules table. */
 export declare const rules: Rules
 
 export declare namespace metadata {
-  export {extract, meta, link, content, ld, ldName, ldUrl, rules}
+  export {extract, meta, link, content, attr, ld, ldName, ldUrl, favicon, favicons, rules}
 }
 
 export default metadata

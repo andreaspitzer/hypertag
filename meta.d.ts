@@ -42,12 +42,35 @@ declare namespace metadata {
   function link(...rels: string[]): Source
   /** An element's text content (e.g. `content('title')`). */
   function content(...tags: string[]): Source
+  /** Any attribute of a matched tag, e.g. `attr('html', 'lang')` reads `<html lang>`. */
+  function attr(selector: string, attribute: string): Source
   /** A JSON-LD value for any of `keys`. */
   function ld(...keys: string[]): Source
   /** A JSON-LD value, coerced from a person/organization shape to a name. */
   function ldName(...keys: string[]): Source
   /** A JSON-LD value, coerced from an image/URL shape to a URL. */
   function ldUrl(...keys: string[]): Source
+
+  /** One declared favicon, resolved against the page URL. */
+  interface Icon {
+    url: string
+    rel: string
+    sizes: string
+    type: string
+  }
+
+  /**
+   * Every `<link rel*=icon>` the page declares, resolved against `url` and ranked best-first
+   * (SVG / `sizes="any"`, then largest raster, then apple-touch-icon). Monochrome `mask-icon`
+   * and hrefless links are dropped.
+   */
+  function favicons(source: string, url?: string): Icon[]
+
+  /**
+   * The single best favicon URL, falling back to `/favicon.ico` at the origin when the page
+   * declares none, or `null` when there is nothing and no `url` to resolve against.
+   */
+  function favicon(source: string, url?: string): string | null
 
   /** The default (overridable) rules table. */
   const rules: Rules
