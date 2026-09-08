@@ -172,7 +172,7 @@ console.log(icons)
 ## 🎯 Selectors (opt-in)
 
 The core stays selector-free. If you want CSS-like sugar, import the separate
-`hypertag/select` entry: it compiles a single-tag selector into exactly the `parse` +
+`hypertag/select` entry: it compiles a tag-plus-attributes selector into exactly the `parse` +
 `.filter()` you would have written by hand, and nothing more (no tree, no DOM, no combinators).
 
 ```js
@@ -211,6 +211,20 @@ Values may be unquoted, single-, or double-quoted; the three are equivalent (`[r
 ≡ `[rel="alternate"]`). Unquoted values are matched a little more loosely than a strict CSS
 tokenizer would allow (e.g. `[property=og:image]` is accepted without quotes).
 
+A comma-separated **selector list** unions its groups, just like CSS:
+
+```js
+select(html, 'link[rel=canonical], meta[property^=og:]')
+// every <link rel=canonical> AND every <meta property^=og:>, in document order
+```
+
+Each group is a complete `tag + conditions` unit, and an element is kept when it satisfies
+**any one whole group** — that group's tag *and* that group's conditions together. Groups never
+cross: `a[x], b[y]` matches an `<a>` with `x` or a `<b>` with `y`, never an `<a y>` or a
+`<b x>`. Results stay in document order, and an element that several groups match still appears
+once. A comma inside a quoted attribute value (`[content="a,b"]`) is part of the value, not a
+group separator; a stray, leading, or trailing comma throws.
+
 **Matching is case-insensitive by default** — both the attribute name and the value. That
 mirrors a real HTML pipeline (the parser lowercases attribute names; metascraper matches meta
 values with the CSS `i` flag) and suits messy metadata, so `meta[property=og:title]` also
@@ -218,9 +232,8 @@ catches `<meta property="OG:Title">`. This is a deliberate divergence from CSS, 
 values case-sensitively; append the CSS Level 4 **`s` flag** to force case-sensitive matching
 on a clause: `link[href=Logo.PNG s]`.
 
-Combinators (` `, `>`, `+`), comma groups, and `.class`/`#id` shorthands are **not** supported
-— hypertag builds no tree — and a selector using them throws a `TypeError` rather than matching
-silently.
+Combinators (` `, `>`, `+`) and `.class`/`#id` shorthands are **not** supported — hypertag
+builds no tree — and a selector using them throws a `TypeError` rather than matching silently.
 
 ### Presets
 

@@ -32,6 +32,11 @@ assert.deepStrictEqual(
   [{$tag: 'link', rel: 'alternate', href: '/x'}],
   'select() smoke result mismatch'
 )
+assert.deepStrictEqual(
+  select('<link rel="canonical" href="/z"><meta property="og:title" content="T">', 'link[rel=canonical], meta[property^=og:]').map(el => el.$tag),
+  ['link', 'meta'],
+  'select() selector-list smoke mismatch'
+)
 assert.strictEqual(
   select.jsonld('<script type="application/ld+json">{"a":1}</script>')[0].$content,
   '{"a":1}',

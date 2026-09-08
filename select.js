@@ -11,7 +11,13 @@
 //
 // No tree, no combinators, no DOM. hypertag returns a flat list of matched opening
 // tags, so a selector is only ever a tag name (the parse argument) plus attribute
-// conditions (the predicate). Combinators and comma groups are rejected, not ignored.
+// conditions (the predicate). Combinators are rejected, not ignored.
+//
+// A comma-separated selector LIST is supported (`link[rel=canonical], meta[property^=og:]`):
+// each group is a full `tag + conditions` unit, and an element is kept when it satisfies ANY
+// one group in its entirety - the group's own tag AND that group's own conditions together.
+// Groups never cross-pollinate (`a[x], b[y]` never matches `<a y>` or `<b x>`). Results come
+// back in document order, with each element appearing once even if several groups match it.
 const parse = require('./hypertag.js')
 
 // The leading tag name, or `*`, or nothing (an omitted tag means `*`). parse() already
@@ -45,9 +51,28 @@ function select(source, selector, options) {
 }
 
 select.compile = (selector, options) => {
-  const {tag, conditions} = compile(selector)
-  const predicate = toPredicate(conditions)
-  return source => parse(source, tag, options).filter(predicate)
+  const groups = parseSelector(selector)
+
+  // Fast path: a single group is exactly today's `parse(source, tag).filter(predicate)` -
+  // the predicate never re-checks the tag, because parse already restricts to it.
+  if (groups.length === 1) {
+    const {tag, conditions} = groups[0]
+    const predicate = toPredicate(conditions)
+    return source => parse(source, tag, options).filter(predicate)
+  }
+
+  // Selector list: parse the union of the groups' tags in one document-order pass, then keep
+  // an element when ANY group matches it whole. Each group here re-checks its own tag name,
+  // because one parse call now carries elements belonging to several different groups.
+  const tagKey = options?.tagKey ?? '$tag'
+  const compiled = groups.map(({tag, conditions}) => ({
+    tag: tag.toLowerCase(),
+    predicate: toPredicate(conditions)
+  }))
+  const tags = compiled.some(g => g.tag === '*') ? ['*'] : [...new Set(compiled.map(g => g.tag))]
+  const predicate = el =>
+    compiled.some(g => (g.tag === '*' || el[tagKey].toLowerCase() === g.tag) && g.predicate(el))
+  return source => parse(source, tags, options).filter(predicate)
 }
 
 // Named shortcuts for the selectors people reach for most, each a pre-baked `select` that
@@ -66,12 +91,47 @@ Object.assign(select, {
   jsonld: select.compile('script[type*=ld+json]', {content: true})
 })
 
-function compile(selector) {
+// Split a selector LIST into its comma groups, then compile each. A comma only separates
+// groups at the top level: one inside a `[...]` clause (an attribute value like
+// `[content="a,b"]`) is part of that value, not a group boundary.
+function parseSelector(selector) {
   if (typeof selector !== 'string') {
     throw new TypeError(`hypertag/select: selector must be a string, got ${typeof selector}`)
   }
+  return splitGroups(selector).map(compileGroup)
+}
 
-  const s = selector.trim()
+function splitGroups(selector) {
+  const groups = []
+  let start = 0
+  let depth = 0 // inside how many nested `[` ... `]`
+  let quote = null // the open quote char while inside a quoted attribute value, else null
+  for (let i = 0; i < selector.length; i++) {
+    const c = selector[i]
+    if (quote) {
+      if (c === quote) quote = null
+    } else if (c === '"' || c === "'") {
+      quote = c
+    } else if (c === '[') {
+      depth++
+    } else if (c === ']') {
+      if (depth > 0) depth--
+    } else if (c === ',' && depth === 0) {
+      groups.push(selector.slice(start, i))
+      start = i + 1
+    }
+  }
+  groups.push(selector.slice(start))
+  return groups
+}
+
+function compileGroup(group) {
+  const s = group.trim()
+  if (s === '') {
+    throw new TypeError(
+      'hypertag/select: empty selector group (a stray, leading, or trailing comma)'
+    )
+  }
   const lead = tagPattern.exec(s)
   const tag = lead[1] || '*'
 
@@ -99,8 +159,8 @@ function compile(selector) {
 
   if (consumed !== s.length) {
     throw new TypeError(
-      `hypertag/select: unsupported or malformed selector ${JSON.stringify(selector)} ` +
-        '(combinators, comma groups, and .class/#id shorthands are not supported)'
+      `hypertag/select: unsupported or malformed selector ${JSON.stringify(group)} ` +
+        '(combinators and .class/#id shorthands are not supported)'
     )
   }
   return {tag, conditions}

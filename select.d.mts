@@ -34,6 +34,11 @@ export type Preset = (source: string) => Tag[]
  * Attribute name and value matching are case-insensitive by default (so
  * `meta[property=og:title]` also matches `<meta property="OG:Title">`); append the CSS
  * Level 4 `s` flag to a clause to force case-sensitive matching (`[href=Logo.PNG s]`).
+ *
+ * A comma-separated selector list unions its groups
+ * (`link[rel=canonical], meta[property^=og:]`): an element is kept when it satisfies any one
+ * whole group (that group's tag AND its conditions). Results are in document order, each
+ * element once.
  */
 export declare function select(
   source: string,
@@ -44,6 +49,7 @@ export declare function select(
 /**
  * Compile `selector` once into a reusable parser, mirroring `extend`.
  * `compile('link[rel=alternate]')` is `source => parse(source, 'link').filter(...)`.
+ * Accepts a comma-separated selector list, which unions its groups.
  */
 export declare function compile(
   selector: string,

@@ -116,10 +116,80 @@ test('the s flag forces case-sensitive matching', t => {
 test('unsupported selectors throw', t => {
   t.throws(() => select(html, 'a > b'), {instanceOf: TypeError})
   t.throws(() => select(html, 'a b'), {instanceOf: TypeError})
-  t.throws(() => select(html, 'link, meta'), {instanceOf: TypeError})
   t.throws(() => select(html, 'link[rel=alternate] junk'), {instanceOf: TypeError})
   t.throws(() => select(html, 'link[a=1] [b=2]'), {instanceOf: TypeError}) // gap before a later clause
   t.throws(() => compile(42), {instanceOf: TypeError})
+})
+
+test('selector list: comma unions the groups in document order', t => {
+  // Two whole groups OR-combine. The <link disabled> and <link title=""> have neither rel,
+  // so only the alternates (2) and the description meta (1) match, in source order.
+  const hits = select(html, 'link[rel=alternate], meta[name=description]')
+  t.deepEqual(
+    hits.map(el => el.$tag),
+    ['link', 'link', 'meta']
+  )
+  t.is(hits.length, 3)
+})
+
+test('selector list follows document order, not selector order', t => {
+  // The stylesheet <link> sits above the description <meta> in the source, so it comes first
+  // even though its group is written second in the selector.
+  const list = select(html, 'meta[name=description], link[rel=stylesheet]')
+  t.deepEqual(list, [
+    ...parse(html, 'link').filter(l => l.rel === 'stylesheet'),
+    ...parse(html, 'meta').filter(m => m.name === 'description')
+  ])
+})
+
+test('selector list: each group binds its conditions to its own tag (no cross-match)', t => {
+  // The swapped-attribute case: a <link> carrying meta's attribute and a <meta> carrying
+  // link's. Group `link[rel=canonical]` needs a <link> WITH rel=canonical; group
+  // `meta[property^=og:]` needs a <meta> WITH property=og:*. Neither element satisfies its
+  // own group, and groups never cross, so the result is empty.
+  const swapped = '<link property="og:keywords" content="x"><meta rel="canonical" href="/y">'
+  t.deepEqual(select(swapped, 'link[rel=canonical], meta[property^=og:]'), [])
+
+  // Sanity: put each attribute back on its correct tag and both groups match.
+  const correct = '<link rel="canonical" href="/y"><meta property="og:keywords" content="x">'
+  const hits = select(correct, 'link[rel=canonical], meta[property^=og:]')
+  t.deepEqual(hits.map(el => el.$tag), ['link', 'meta'])
+})
+
+test('selector list: an element matched by several groups appears once', t => {
+  const page = '<meta name="description" content="d">'
+  // Both groups match the same <meta>; it must not be duplicated.
+  t.is(select(page, 'meta[name=description], meta[content]').length, 1)
+})
+
+test('selector list: a wildcard group widens the parse to every tag', t => {
+  const page = '<title>T</title><meta name="x" content="y"><link rel="canonical">'
+  // `*[name]` matches any tag with a name attribute; `link[rel]` adds the link.
+  const hits = select(page, '*[name], link[rel]')
+  t.deepEqual(hits.map(el => el.$tag), ['meta', 'link'])
+})
+
+test('selector list: a top-level comma splits, one inside [] does not', t => {
+  const page = '<meta name="a,b" content="x"><meta name="c" content="y">'
+  // The comma inside the quoted value is part of the value, so this is ONE group.
+  t.is(select(page, 'meta[name="a,b"]').length, 1)
+  // A real top-level comma makes two groups.
+  t.is(select(page, 'meta[name="a,b"], meta[name=c]').length, 2)
+})
+
+test('selector list: honours a custom tagKey when re-checking each group tag', t => {
+  const page = '<meta name="x" content="y"><link rel="canonical" href="/z">'
+  const hits = select(page, 'meta[name=x], link[rel=canonical]', {tagKey: 'tag'})
+  // The tag name lands under the custom key, and the per-group tag check reads it from there.
+  t.deepEqual(hits.map(el => el.tag), ['meta', 'link'])
+  t.false('$tag' in hits[0])
+})
+
+test('selector list: stray, leading, and trailing commas throw', t => {
+  t.throws(() => select(html, 'link,'), {instanceOf: TypeError}) // trailing
+  t.throws(() => select(html, ',meta'), {instanceOf: TypeError}) // leading
+  t.throws(() => select(html, 'link,,meta'), {instanceOf: TypeError}) // empty middle group
+  t.throws(() => select(html, ','), {instanceOf: TypeError}) // nothing but a comma
 })
 
 test('presets are pre-baked selectors returning raw tags', t => {

@@ -37,6 +37,13 @@ assert.deepStrictEqual(
   [{$tag: 'link', rel: 'alternate', href: '/x'}],
   'select() smoke result mismatch'
 )
+assert.deepStrictEqual(
+  selectMod
+    .default('<link rel="canonical" href="/z"><meta property="og:title" content="T">', 'link[rel=canonical], meta[property^=og:]')
+    .map(el => el.$tag),
+  ['link', 'meta'],
+  'select() selector-list smoke mismatch'
+)
 
 // The opt-in sanitize layer: default import is the callable sanitize function, named exports resolve.
 const sanitizeMod = await import('../sanitize.mjs')
