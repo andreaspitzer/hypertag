@@ -1,7 +1,7 @@
 {
   "name": "hypertag",
   "version": "0.1.0",
-  "description": "The fastest, smallest, lowest-memory way to pull tags, meta and OpenGraph out of HTML: no DOM, zero dependencies, ~0.8 kB. Runs on Node, Deno, Bun and Cloudflare Workers.",
+  "description": "The fastest, smallest, lowest-memory way to turn HTML into a link-preview card: OpenGraph, Twitter, JSON-LD and favicon in ~5 kB, no DOM, zero dependencies. Built for the edge; runs on Node, Deno, Bun and Cloudflare Workers.",
   "keywords": [
     "opengraph",
     "open-graph",
