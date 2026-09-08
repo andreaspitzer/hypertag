@@ -8,7 +8,9 @@ test('decode: named and numeric references', t => {
   t.is(decode('a &amp; b'), 'a & b')
   t.is(decode('it&#39;s'), "it's")
   t.is(decode('it&#x27;s'), "it's")
-  t.is(decode('caf&eacute;'), 'caf&eacute;') // rare named left verbatim (built-in is tiny)
+  t.is(decode('caf&eacute;'), 'café') // Latin-1 accented letters are in the built-in set
+  t.is(decode('Ma&ntilde;ana &amp; co.'), 'Mañana & co.')
+  t.is(decode('Stra&szlig;e'), 'Straße')
 })
 
 test('decode: Windows-1252 remap of 0x80-0x9F numeric references', t => {
@@ -57,10 +59,10 @@ test('sanitize: works directly on parse() output', t => {
 })
 
 test('sanitize: pluggable decoder via options.decode', t => {
-  // A stand-in "full" decoder that knows an entity the built-in does not.
-  const fullDecode = s => s.replace('&eacute;', 'é')
-  t.is(sanitize('caf&eacute;', {decode: fullDecode}), 'café')
-  t.is(sanitize('caf&eacute;').includes('&eacute;'), true) // built-in leaves it
+  // A stand-in "full" decoder that knows a long-tail entity the built-in does not (Greek).
+  const fullDecode = s => s.replace('&alpha;', 'α')
+  t.is(sanitize('&alpha; particle', {decode: fullDecode}), 'α particle')
+  t.is(sanitize('&alpha; particle').includes('&alpha;'), true) // built-in leaves the long tail
 })
 
 test('cleanUrl: resolves relative and strips utm params', t => {

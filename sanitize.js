@@ -23,7 +23,7 @@ const WINDOWS_1252 = {
 }
 
 // Common named references that turn up in titles, descriptions and URLs. The long tail of
-// HTML5 named entities is intentionally left to an injected decoder.
+// HTML5 named entities (Greek, math, symbols, ...) is intentionally left to an injected decoder.
 const NAMED = {
   amp: '&', lt: '<', gt: '>', quot: '"', apos: "'",
   nbsp: ' ', ensp: ' ', emsp: ' ', thinsp: ' ', shy: '­',
@@ -34,7 +34,18 @@ const NAMED = {
   frac12: '½', frac14: '¼', frac34: '¾',
   euro: '€', pound: '£', yen: '¥', cent: '¢',
   sect: '§', para: '¶', middot: '·', bull: '•',
-  dagger: '†', Dagger: '‡', prime: '′', Prime: '″'
+  dagger: '†', Dagger: '‡', prime: '′', Prime: '″',
+  // Latin-1 accented letters: frequent in real titles, names and descriptions across European
+  // languages, so kept in the built-in rather than treated as long tail.
+  Agrave: 'À', Aacute: 'Á', Acirc: 'Â', Atilde: 'Ã', Auml: 'Ä', Aring: 'Å', AElig: 'Æ', Ccedil: 'Ç',
+  Egrave: 'È', Eacute: 'É', Ecirc: 'Ê', Euml: 'Ë', Igrave: 'Ì', Iacute: 'Í', Icirc: 'Î', Iuml: 'Ï',
+  ETH: 'Ð', Ntilde: 'Ñ', Ograve: 'Ò', Oacute: 'Ó', Ocirc: 'Ô', Otilde: 'Õ', Ouml: 'Ö', Oslash: 'Ø',
+  Ugrave: 'Ù', Uacute: 'Ú', Ucirc: 'Û', Uuml: 'Ü', Yacute: 'Ý', THORN: 'Þ', szlig: 'ß',
+  agrave: 'à', aacute: 'á', acirc: 'â', atilde: 'ã', auml: 'ä', aring: 'å', aelig: 'æ', ccedil: 'ç',
+  egrave: 'è', eacute: 'é', ecirc: 'ê', euml: 'ë', igrave: 'ì', iacute: 'í', icirc: 'î', iuml: 'ï',
+  eth: 'ð', ntilde: 'ñ', ograve: 'ò', oacute: 'ó', ocirc: 'ô', otilde: 'õ', ouml: 'ö', oslash: 'ø',
+  ugrave: 'ù', uacute: 'ú', ucirc: 'û', uuml: 'ü', yacute: 'ý', thorn: 'þ', yuml: 'ÿ',
+  iexcl: '¡', iquest: '¿', ordf: 'ª', ordm: 'º'
 }
 
 const entityPattern = /&(#\d+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi
