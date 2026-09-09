@@ -124,8 +124,23 @@ two-tier edge tests exist and run:
 - ✅ [Vercel deployed](issues/14-vercel-edge-deploy.md)
 - ✅ [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md)
 
+**Deployed tier-2 PROVEN in real CI (2026-09-09):** with the Pages fixture live, `edge-e2e.yml`
+dispatched end-to-end. The required matrix (Node 18/20/22/24, Bun, Deno) is green, and **Cloudflare's
+deployed job is GREEN** – a real ephemeral Worker deployed to `*.workers.dev`, ran `fromUrl` against the
+live fixture with native fetch, its card **exact-matched `EXPECTED`**, and it tore itself down (run
+`34383953795`). One flake fixed en route: a fresh unique-named worker's `*.workers.dev` hostname returns
+404 until it propagates, and the 10×3s (30s) retry window sometimes lost that race; widened to 40×3s
+(~2 min) in `test/edge/cloudflare/deploy-check.mjs` (commit `cd5209e`, on `claude/edge-e2e-8d9irp` –
+still to reach `develop`). Vercel's deployed job stays red on **credentials** (its `VERCEL_ORG_ID` /
+`VERCEL_PROJECT_ID` / `VERCEL_TOKEN` don't resolve to an accessible project) – a secrets fix, not code.
+
 Remaining:
 
+- 🔴 **Vercel deployed job** – blocked on the three `VERCEL_*` secrets resolving to a reachable project
+  (maintainer). Everything else in the Vercel path (pre-link, OIDC assert) is in place and proven up to
+  the `vercel pull` credential step.
+- 🟡 **Land the Cloudflare retry-window fix (`cd5209e`) on `develop`** so develop-push runs carry it, not
+  just the dispatch on `claude/edge-e2e-8d9irp`.
 - 🚫 Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – awaits Deno EA
   signup (`403 SIGNUP_UNAVAILABLE`); Deno the runtime is covered by the local tier-2 matrix meanwhile.
 - Downstream fog: README / claim reconciliation, once CI results reveal reality (see Not yet specified).
