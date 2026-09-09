@@ -95,12 +95,17 @@ later.
   importing the package subpaths from the packed tarball; runtime-agnostic throwing assert (no
   `node:assert`), pack-install driver, `smoke:edge:tier1[:node|:bun|:deno]`. Node + Bun green locally;
   Deno wired, CI confirms. Commit `f85ac49`.
+- [Build: local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md) – controlled fixture +
+  `pages.yml` deploy workflow; runtime-agnostic native-`fromUrl` exact-match check (`test/edge/tier2.mjs`,
+  `FIXTURE_URL` / `EXPECTED` reused downstream); shared `pack-run.mjs` driver. Node + Bun green
+  (localhost); Deno + live URL via CI. Commit `7754eea`. **Needs Pages Source = "GitHub Actions".**
 
 **Frontier now: all decisions are settled and provisioning is done – the map has crossed into the
 build.** The build fog has graduated into execution tickets:
 
 - ✅ Done: [tier-1 harness + runners](issues/11-tier1-harness-runners.md) (Node + Bun green; Deno via CI).
-- Takeable now (unblocked, no secrets): [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md).
+- ✅ Done: [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md) (Node + Bun green localhost;
+  live URL + Deno via CI; needs Pages Source = "GitHub Actions").
 - Takeable now (secrets ready): [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md),
   then [Vercel deployed](issues/14-vercel-edge-deploy.md) (blocked by 13 for the shared handler).
 - Waiting: [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) (blocked by 11–14).
