@@ -13,9 +13,11 @@
     "bench:speed": "node speed.mjs",
     "bench:size": "node size.mjs",
     "bench:layers": "node layer-sizes.mjs",
-    "bench:memory": "node memory.mjs"
+    "bench:memory": "node memory.mjs",
+    "bench:edge-speed": "node edge-speed.mjs"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^4.0.0",
     "benchmark": "^2.1.4",
     "cheerio": "^1.2.0",
     "domino": "^2.1.8",
@@ -29,6 +31,7 @@
     "metascraper-image": "^5.46.11",
     "metascraper-title": "^5.46.11",
     "metascraper-url": "^5.46.11",
+    "miniflare": "^4.0.0",
     "node-html-parser": "^7.0.0",
     "parse5": "^8.0.1"
   }

@@ -57,6 +57,39 @@ the **same commit**. The gate's failure message says this too.
 **Maintainer action:** mark `claims (size + correctness)` as a required status check; do not
 require the informational job.
 
+## Measuring speed on the deployment targets (edge runtimes)
+
+The `benchmark/speed.mjs` numbers run on Node. To measure extraction speed on the actual **edge
+runtimes** (Cloudflare Workers / Vercel Edge), there is a hard runtime constraint: on a
+**deployed** Worker (and Vercel Edge), `Date.now()`/`performance.now()` return the time of the
+last I/O and **do not advance during code execution** — a Spectre mitigation
+([Cloudflare security model](https://developers.cloudflare.com/workers/reference/security-model/)).
+So a deployed edge function **cannot time its own CPU-bound work**, and neither runtime exposes a
+per-request heap/memory API. A naive "have the worker time `metadata()` and report ms + MB"
+cannot work on either target.
+
+What is measurable, in three parts:
+
+- **A — local same-runtime speed (`benchmark/edge-speed.mjs`, `npm run bench:edge-speed`).**
+  Runs `metadata()` on **real workerd** (via Miniflare) and the **Vercel edge-runtime** (via
+  `@edge-runtime/vm`), locally, where timers *do* advance, plus a Node baseline. This is the
+  accurate, reproducible speed number for the edge engines. Caveat: EdgeVM gives the edge
+  *globals* but runs on the host process's V8, so its engine figure tracks Node — workerd is the
+  genuinely different runtime. Wired into the informational CI job (tracked, not gated).
+- **B — deployed differential latency (planned).** Deploy a real CF/Vercel endpoint that runs *N*
+  in-memory `metadata()` iterations (no page fetch), time it from the client, subtract a
+  baseline, median over many reps → an over-the-wire edge number. CF runnable with the existing
+  Cloudflare secrets; the Vercel leg is blocked on the same credentials issue as the deployed
+  tier-2 job.
+- **C — Cloudflare platform CPU-time telemetry (planned).** Drive the deployed worker, then read
+  per-request CPU time from the Cloudflare GraphQL Analytics API (`workersInvocationsAdaptive`,
+  `cpuTimeP50`/`P99`). Cloudflare-only; needs an analytics-scoped token; aggregation has a
+  few-minutes delay.
+
+**Memory on the edge** is not obtainable as a per-request MB figure (no API on either runtime).
+The real MB numbers live in `benchmark/memory.mjs` (Node); on the edge the honest signal is a
+structural "stays under the 128 MB isolate limit on large/many pages" check, not a number.
+
 ## Out of scope (for now)
 
 The **competitor comparison** numbers ("2.8x faster than openlink", "4.0 kB for openlink") are
