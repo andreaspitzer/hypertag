@@ -110,26 +110,31 @@ later.
   preview via **Trusted Sources OIDC** (`x-vercel-trusted-oidc-idp-token`, audience
   `github.com/andreaspitzer`). Wrapper green Node/Bun; deploy via CI. Job needs `id-token: write`.
   Commit `00120ed`.
+- [Build: edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) – required runtime matrix (Node
+  18/20/22/24, Bun, Deno) running tier-1 + local tier-2 (fixture served locally via `serve-fixture.mjs`,
+  so green off-Pages) on push/PR; CF + Vercel deploy jobs allowed-to-fail on master/dispatch (Vercel
+  with `id-token: write`). actionlint clean, matrix green locally. Commit `7c2bb69`.
 
-**Frontier now: all decisions are settled and provisioning is done – the map has crossed into the
-build.** The build fog has graduated into execution tickets:
+**Frontier now: the build is complete.** Tickets 11–15 are built, locally validated, and pushed – the
+two-tier edge tests exist and run:
 
-- ✅ Done: [tier-1 harness + runners](issues/11-tier1-harness-runners.md) (Node + Bun green; Deno via CI).
-- ✅ Done: [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md) (Node + Bun green localhost;
-  live URL + Deno via CI; needs Pages Source = "GitHub Actions").
-- ✅ Done: [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md)
-  (handler green on Node/Bun + local workerd; remote deploy via CI).
-- ✅ Done: [Vercel deployed](issues/14-vercel-edge-deploy.md) (wrapper green; Trusted Sources OIDC;
-  deploy via CI).
-- Takeable now (11–14 done): [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) – ties the runtime
-  matrix + CF/Vercel deploy jobs together; first place the real deploys + live Pages fixture run.
-- Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – do not claim until
-  Deno EA signup reopens; Deno the runtime is covered by the local tier-2 run (12) meanwhile.
+- ✅ [tier-1 harness + runners](issues/11-tier1-harness-runners.md)
+- ✅ [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md)
+- ✅ [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md)
+- ✅ [Vercel deployed](issues/14-vercel-edge-deploy.md)
+- ✅ [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md)
 
-> **Deno Deploy signup blocked (2026-09-09).** Account creation returns `403 SIGNUP_UNAVAILABLE`.
-> Maintainer decision: proceed without it, defer the deployed Deno Deploy tier-2 job (ticket 16). Deno
-> the runtime stays covered by the local tier-2 run (ticket 12); that deployed job is already
-> allowed-to-fail per ticket 10.
+Remaining:
+
+- 🚫 Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – awaits Deno EA
+  signup (`403 SIGNUP_UNAVAILABLE`); Deno the runtime is covered by the local tier-2 matrix meanwhile.
+- Downstream fog: README / claim reconciliation, once CI results reveal reality (see Not yet specified).
+
+**Reaching "green in CI" (the destination) now rests on CI runs + two maintainer settings:**
+(1) repo **Settings → Pages → Source = "GitHub Actions"** so the fixture goes live (required for the
+deployed jobs on master); (2) mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs as required
+status checks on `master` (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel jobs first run
+on push to `master` / `workflow_dispatch`, never on a PR.
 
 ## Not yet specified
 
