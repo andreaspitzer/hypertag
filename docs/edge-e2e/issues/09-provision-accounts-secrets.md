@@ -1,7 +1,7 @@
 # Provision provider accounts + CI credentials (Cloudflare, Deno Deploy, Vercel)
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 04, 05, 06
 
 ## Question
