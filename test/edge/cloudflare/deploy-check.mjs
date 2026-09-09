@@ -8,8 +8,8 @@
 //      packConsumer, so the deployed worker bundles the REAL published package, ticket 03),
 //   2. lay the shared handler + the Workers shim + wrangler.toml into that consumer and
 //      `npm install` the tarball there,
-//   3. `wrangler versions upload` under a UNIQUE per-run name -> a `*.workers.dev` preview
-//      URL (no promotion over any live route), authed by CLOUDFLARE_API_TOKEN +
+//   3. `wrangler deploy` under a UNIQUE per-run name -> a `*.workers.dev` URL (a throwaway
+//      worker torn down in step 5), authed by CLOUDFLARE_API_TOKEN +
 //      CLOUDFLARE_ACCOUNT_ID from the env (ticket 09),
 //   4. fetch `<previewUrl>?url=<FIXTURE_URL>` and assert the returned card exact-matches
 //      tier-2's frozen EXPECTED (positive extraction, reusing assert.mjs + tier2.mjs),
@@ -110,11 +110,15 @@ try {
     env: process.env
   })
 
-  // 3. Upload an ephemeral version -> a *.workers.dev preview URL (no live-route promotion).
-  console.log(`smoke:edge:cf: wrangler versions upload (name ${workerName})`)
+  // 3. Deploy an ephemeral worker under a UNIQUE per-run name -> a *.workers.dev URL.
+  //    Use `wrangler deploy`, NOT `versions upload`: versions upload only uploads a new
+  //    version of an ALREADY-EXISTING worker, so for a fresh per-run name it errors "You
+  //    cannot upload a new version of a Worker that does not yet exist". `deploy` creates and
+  //    activates the throwaway worker on workers.dev, which is exactly what we tear down below.
+  console.log(`smoke:edge:cf: wrangler deploy (name ${workerName})`)
   // NO_COLOR is set for the child, so the output is plain; match the URL directly.
   const out = wrangler(
-    ['versions', 'upload', '--config', 'cloudflare/wrangler.toml', '--name', workerName],
+    ['deploy', '--config', 'cloudflare/wrangler.toml', '--name', workerName],
     {stdio: ['ignore', 'pipe', 'inherit']}
   )
   const match = out.match(/https?:\/\/[^\s"']+\.workers\.dev[^\s"']*/)

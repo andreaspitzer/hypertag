@@ -35,7 +35,7 @@
 //   support OIDC for the DEPLOY itself, so the deploy trio still uses the static VERCEL_TOKEN.
 
 import {execFileSync} from 'node:child_process'
-import {copyFileSync, mkdirSync, rmSync} from 'node:fs'
+import {copyFileSync, mkdirSync, rmSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {deepEqual} from '../assert.mjs'
@@ -139,6 +139,18 @@ try {
     stdio: 'inherit',
     env: process.env
   })
+
+  // Pre-link the project explicitly: write .vercel/project.json with the org/project IDs so
+  // `vercel pull` uses them directly. Relying on the VERCEL_ORG_ID / VERCEL_PROJECT_ID env
+  // vars alone can fail in a fresh consumer dir with "Could not retrieve Project Settings ...
+  // To link your Project, remove the .vercel directory and deploy again"; the explicit link
+  // file is Vercel's documented pre-link for CI. (If the IDs themselves are wrong the deploy
+  // still fails - with a clearer downstream error - so this hardens the mechanism, not creds.)
+  mkdirSync(join(consumer, '.vercel'), {recursive: true})
+  writeFileSync(
+    join(consumer, '.vercel', 'project.json'),
+    `${JSON.stringify({projectId: VERCEL_PROJECT_ID, orgId: VERCEL_ORG_ID}, null, 2)}\n`
+  )
 
   // 3. Ephemeral preview deploy with the documented CI trio (build once, in CI).
   console.log('smoke:edge:vercel: vercel pull --environment=preview')
