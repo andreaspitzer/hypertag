@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <title>hypertag – turn a URL into a link-preview card, on the edge</title>
+  <!-- hypertag social preview – Concept A: "The card" (JTBD / problem-first).
+       1280x640. Export to PNG at 2x for GitHub's social-preview upload.
+       Rules honoured: link-preview-first (P1/P2), extractor is the point (P3),
+       neutral confidence, no competitor names (V1/X1), endash not emdash (F1),
+       earned claims only + "edge-ready" as a property (C2), sizes in kB (F3). -->
+  <defs>
+    <radialGradient id="bg" cx="28%" cy="18%" r="90%">
+      <stop offset="0%" stop-color="#132132"/>
+      <stop offset="100%" stop-color="#0a0f17"/>
+    </radialGradient>
+    <linearGradient id="img" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38e0c8"/>
+      <stop offset="100%" stop-color="#2b7fff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1280" height="6" fill="#38e0c8"/>
+
+  <!-- wordmark -->
+  <text x="80" y="108" font-size="34" font-weight="700" letter-spacing="0.5">
+    <tspan fill="#5f7a94">&lt;/</tspan><tspan fill="#e8eef7">hypertag</tspan><tspan fill="#5f7a94">&gt;</tspan>
+  </text>
+
+  <!-- left column: the job -->
+  <text x="80" y="232" font-size="19" font-weight="600" letter-spacing="3" fill="#38e0c8">LINK-PREVIEW ENDPOINTS, ON THE EDGE</text>
+  <text x="78" y="300" font-size="52" font-weight="800" fill="#e8eef7">Turn a URL into a</text>
+  <text x="78" y="362" font-size="52" font-weight="800" fill="#e8eef7">link-preview card.</text>
+  <text x="80" y="418" font-size="24" fill="#9fb2c6">Open Graph, Twitter cards, JSON-LD and meta</text>
+  <text x="80" y="452" font-size="24" fill="#9fb2c6">– read into one plain object. No DOM.</text>
+
+  <!-- right column: the card motif (the output) -->
+  <g transform="translate(792,196)">
+    <rect x="0" y="0" width="408" height="252" rx="16" fill="#0f1a27" stroke="#26384c" stroke-width="1.5"/>
+    <rect x="0" y="0" width="408" height="120" rx="16" fill="url(#img)"/>
+    <rect x="0" y="104" width="408" height="16" fill="#0f1a27"/>
+    <!-- title -->
+    <rect x="24" y="146" width="300" height="16" rx="8" fill="#e8eef7"/>
+    <!-- description lines -->
+    <rect x="24" y="178" width="360" height="11" rx="5.5" fill="#43586e"/>
+    <rect x="24" y="198" width="330" height="11" rx="5.5" fill="#43586e"/>
+    <!-- favicon + domain -->
+    <circle cx="32" cy="228" r="8" fill="#38e0c8"/>
+    <rect x="50" y="223" width="118" height="10" rx="5" fill="#5f7a94"/>
+  </g>
+  <text x="792" y="486" font-size="15" fill="#5f7a94" font-family="ui-monospace, 'SF Mono', Menlo, monospace">fromUrl(url) → { title, description, image, … }</text>
+
+  <!-- proof chips -->
+  <g font-size="21" font-weight="600">
+    <g transform="translate(80,540)">
+      <rect x="0" y="0" width="150" height="52" rx="26" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+      <text x="75" y="34" text-anchor="middle" fill="#dfe8f2">no DOM</text>
+    </g>
+    <g transform="translate(246,540)">
+      <rect x="0" y="0" width="220" height="52" rx="26" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+      <text x="110" y="34" text-anchor="middle" fill="#dfe8f2">zero dependencies</text>
+    </g>
+    <g transform="translate(482,540)">
+      <rect x="0" y="0" width="118" height="52" rx="26" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+      <text x="59" y="34" text-anchor="middle" fill="#dfe8f2">~5 kB</text>
+    </g>
+    <g transform="translate(616,540)">
+      <rect x="0" y="0" width="190" height="52" rx="26" fill="#38e0c8" fill-opacity="0.14" stroke="#38e0c8" stroke-opacity="0.5"/>
+      <text x="95" y="34" text-anchor="middle" fill="#7ff0dd">lowest-memory</text>
+    </g>
+  </g>
+  <text x="1200" y="574" text-anchor="end" font-size="18" fill="#5f7a94">Node · Deno · Bun · Cloudflare Workers</text>
+</svg>
