@@ -74,10 +74,17 @@ async function restDelete() {
   }
 }
 
-// Fetch the preview URL, retrying while the freshly-uploaded version propagates.
+// Fetch the preview URL, retrying while the freshly-deployed worker propagates.
+// Each run deploys a UNIQUE per-run name, so the *.workers.dev hostname is brand new
+// and Cloudflare's edge returns 404 (no worker at this hostname yet) until it has
+// propagated globally - a cold fresh-hostname window that is racy and can exceed 30s.
+// Retry generously (up to ~2 min) so this propagation lag never reddens the check; a
+// non-200 (the 404 included) is transient here and always retried. Once the hostname
+// serves, the handler only ever returns 200/400/502, so a lingering non-200 is a real
+// failure surfaced when the window is exhausted.
 async function fetchCard(url) {
   let lastErr
-  for (let attempt = 1; attempt <= 10; attempt++) {
+  for (let attempt = 1; attempt <= 40; attempt++) {
     try {
       const res = await fetch(url)
       if (res.ok) return res.json()
