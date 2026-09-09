@@ -70,3 +70,15 @@ jobs:
             npm run --silent bench
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Edge-runtime extraction speed (workerd + Vercel edge-runtime, local)
+        working-directory: benchmark
+        run: |
+          {
+            echo '### hypertag extractor speed on edge runtimes (informational)'
+            echo
+            echo 'metadata() run on real workerd (Miniflare) and the Vercel edge-runtime (EdgeVM), locally where timers work; a deployed edge function cannot time its own CPU (frozen clock). Reproduce locally with `cd benchmark && npm run bench:edge-speed`.'
+            echo
+            echo '```'
+            npm run --silent bench:edge-speed
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
