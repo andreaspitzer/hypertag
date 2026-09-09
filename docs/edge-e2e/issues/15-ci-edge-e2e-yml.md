@@ -43,3 +43,19 @@ persisting across steps on GitHub runners.
 **Maintainer follow-ups:** (1) **Pages Source = "GitHub Actions"** so the fixture is live for the
 deployed jobs on master; (2) mark the six **`tier-1-and-local-tier-2 (...)` matrix jobs** as required
 status checks on `master` – NOT the allowed-to-fail deploy jobs.
+
+### Post-push CI fixes (green as of commit `870f327`)
+
+The first real CI runs surfaced three issues the sandbox couldn't catch; all fixed, and the full
+required matrix (Node 18/20/22/24 + Bun + Deno) is now **green** on the PR:
+
+- **`npm ci` before the smoke jobs** (`572eaf9`) – the smoke scripts `npm pack` internally, which
+  runs the repo's `prepare` (husky) lifecycle; without `node_modules` it failed `husky: not found`
+  on every runtime. Each edge-e2e job now runs `npm ci` (+ npm cache) first, mirroring `ci.yml`.
+- **Deno `file:` tarball resolution** (`870f327`) – Deno rejects a `file:` npm dep under
+  `--node-modules-dir=auto` ("only supported with `--node-modules-dir=manual`"). `pack-run.mjs`'s
+  Deno runner now installs with npm and runs Deno in `--node-modules-dir=manual`.
+- **Vercel native Git integration** (`870f327`) – connecting the Vercel project auto-deployed the
+  repo root on every push and failed (it's a library, not a Vercel app). A root `vercel.json` with
+  `git.deploymentEnabled: false` disables those auto-deploys; the CLI-based deploy-check is
+  unaffected.
