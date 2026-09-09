@@ -47,8 +47,33 @@ later.
 
 <!-- index of closed tickets: one line each, gist + link; detail lives in the ticket -->
 
-_(none yet – this is the charting session. Open tickets are the child issues under `issues/`;
-find the frontier by scanning for open, unblocked, unclaimed files, lowest number first.)_
+- [Research: Cloudflare Workers](issues/04-research-cloudflare-workers.md) — viable free-tier target;
+  wrangler v4 esbuild should resolve the ESM subpath exports (tier 1 proves it), `nodejs_compat`
+  avoidable for the library, ephemeral `workers.dev` deploy→curl→delete works with a
+  `CLOUDFLARE_API_TOKEN` (Workers Scripts:Edit) + account id. Catch: the test worker must avoid
+  `node:assert`. Full facts in [`research/cloudflare-workers.md`](research/cloudflare-workers.md).
+- [Research: Deno + Deno Deploy](issues/05-research-deno.md) — local Deno resolves `npm:hypertag/*`
+  from cache with no config and `node:assert` works there; **but `deployctl`/Deploy Classic were shut
+  down 20 Jul 2026** — current path is the `deno deploy` CLI + `DENO_DEPLOY_TOKEN`, free tier covers
+  CI, yet there's **no free auto-teardown** (Sandboxes are Pro-only), which shapes the deployment
+  model. Full facts in [`research/deno.md`](research/deno.md).
+- [Research: Vercel Edge](issues/06-research-vercel-edge.md) — ESM fits the V8-isolate edge runtime
+  (subpath proven by tier 1); ephemeral preview deploy works on Hobby via `vercel deploy --yes`
+  (pre-create the project). Real blocker: **preview-URL protection** needs a Protection-Bypass secret
+  to curl. Correction: use `export const config = {runtime:'edge'}`, not `export const runtime`. Full
+  facts in [`research/vercel-edge.md`](research/vercel-edge.md).
+- [Research: Bun + Node](issues/07-research-bun-node.md) — both local-only in CI (no provisioning),
+  both honour the subpath `exports` map, both give a native-`fetch` tier-2 signal locally (stable
+  fetch since Node v21). No `npm pack` needed for an in-repo harness (self-referencing); `node:assert`
+  is safe on Bun/Node but not the cross-runtime LCD. Full facts in
+  [`research/bun-node.md`](research/bun-node.md).
+
+**Frontier now:** the three decision tickets (tier-1 contract, tier-2 contract, version-under-test)
+plus — newly unblocked by the research — [Deployment model](issues/08-deployment-model.md) and
+[Provision accounts + CI secrets](issues/09-provision-accounts-secrets.md). Ticket 10 (CI structure)
+stays blocked behind the deployment-model decision. A cross-cutting finding for ticket 01: the shared
+tier-1 assertion harness cannot rely on `node:assert` (fine on Node/Bun/Deno, not guaranteed on
+Workers/Vercel) — the lowest-common-denominator is a plain throwing assert.
 
 ## Not yet specified
 

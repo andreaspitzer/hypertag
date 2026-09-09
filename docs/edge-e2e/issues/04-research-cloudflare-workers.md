@@ -1,7 +1,7 @@
 # Research: Cloudflare Workers – CI deploy, ESM/subpath resolution, native fetch, free tier
 
 Type: research
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -28,3 +28,28 @@ Investigate (primary sources – Cloudflare/wrangler docs):
 
 Output: `cloudflare-workers.md` answering the above with citations, plus a concrete "what CI needs"
 list (token scopes, account setup, wrangler config) for tickets 08/09/10.
+
+## Answer
+
+Findings: [`../research/cloudflare-workers.md`](../research/cloudflare-workers.md). Cloudflare Workers
+is a viable, free-tier e2e target; the mechanics are known.
+
+- **ESM + subpath resolution:** wrangler bundles npm deps with its built-in esbuild, which resolves
+  the `exports` map, so `hypertag` / `hypertag/parse` / `hypertag/meta` should resolve at bundle
+  time. The docs don't spell out condition precedence for a third-party package, so this is
+  **exactly what tier 1 proves** rather than a documented guarantee (`alias` is the escape hatch if
+  a subpath ever fails). wrangler is at **v4** (4.129.x).
+- **`nodejs_compat` genuinely avoidable for the library** (no `node:` builtins, native global
+  `fetch`). The catch is the **harness**: `scripts/smoke.js`'s `node:assert` only works under Node
+  compat, so the Workers test worker must avoid `node:` imports (assert via `throw`) unless compat
+  date ≥ 2026-08-04. → **strong input to ticket 01's harness-portability decision.**
+- **Ephemeral CI deploy feasible on free tier:** `workers.dev` (no zone) suffices; auth is
+  `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`, core scope **Workers Scripts:Edit**; pattern is
+  `wrangler deploy --yes` → curl → `wrangler delete`. Free limits (100k req/day, 50 external
+  subrequests/req) cover a deploy-invoke-teardown with one `fromUrl`.
+- **Uncertainties:** the non-interactive flag for `wrangler delete` isn't documented (fall back to
+  REST DELETE); exact minimal token scope confirmed only as "Workers Scripts:Edit necessary" (docs
+  site was egress-blocked; facts via the docs search index).
+
+Feeds: ticket 01 (harness must not use `node:assert` on Workers), ticket 08 (ephemeral deploy +
+teardown supported), ticket 09 (`CLOUDFLARE_API_TOKEN` w/ Workers Scripts:Edit + account id).
