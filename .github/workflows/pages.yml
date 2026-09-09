@@ -1,0 +1,56 @@
+name: Pages
+
+# Publishes the tier-2 edge-e2e fixture (test/edge/fixture/) to GitHub Pages so
+# its directory root is served at the site root:
+#
+#   https://andreaspitzer.github.io/hypertag/  ->  test/edge/fixture/index.html
+#
+# This is the single, controlled cross-origin target the tier-2 checks hit with
+# each runtime's NATIVE fetch (test/edge/tier2.mjs, and later the deployed
+# Vercel / Cloudflare / Deno jobs). It is a SEPARATE workflow from the edge-e2e
+# test matrix (ticket 15 owns that) - this one only builds and deploys the
+# fixture, it runs no tests.
+#
+# REQUIRES: repo Settings -> Pages -> "Source" set to "GitHub Actions" (not a
+# branch). If Source is set to a branch, this deploy is ignored and the fixture
+# will not go live - the maintainer must switch it.
+
+on:
+  # Deploy when the fixture (or this workflow) changes on master.
+  push:
+    branches:
+      - master
+    paths:
+      - test/edge/fixture/**
+      - .github/workflows/pages.yml
+  # Manual escape hatch to (re)publish on demand.
+  workflow_dispatch:
+
+# Least-privilege token for the Pages deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One live deployment at a time; let an in-progress run finish (don't cancel a
+# deploy midway).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload the fixture directory itself, so its index.html lands at the
+          # site root rather than under a /test/edge/fixture/ subpath.
+          path: test/edge/fixture
+      - id: deployment
+        uses: actions/deploy-pages@v4
