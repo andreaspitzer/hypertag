@@ -101,6 +101,9 @@
     "smoke:edge:vercel:local:node": "node test/edge/vercel/run-vercel.mjs node",
     "smoke:edge:vercel:local:bun": "node test/edge/vercel/run-vercel.mjs bun",
     "smoke:edge:vercel": "node test/edge/vercel/deploy-check.mjs",
+    "claims": "npm run claims:size && npm run claims:correctness",
+    "claims:size": "node test/claims/size-gate.mjs",
+    "claims:correctness": "node test/claims/correctness-gate.mjs",
     "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"
@@ -112,12 +115,14 @@
     "ava": "^8.0.1",
     "c8": "^12.0.0",
     "commit-and-tag-version": "^13.1.2",
+    "esbuild": "0.25.12",
     "husky": "^9.1.7"
   },
   "ava": {
     "files": [
       "test/**/*",
-      "!test/edge/**"
+      "!test/edge/**",
+      "!test/claims/**"
     ]
   },
   "commitlint": {
