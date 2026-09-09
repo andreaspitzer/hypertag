@@ -1,15 +1,12 @@
-# </​hypertag> [![npm-version-badge][]]() [![npm-license-badge][]]()
+# &lt;/hypertag&gt; [![npm-version-badge][]]() [![npm-license-badge][]]()
 
-> **The smallest, fastest HTML parser that skips the DOM.**
+> **The fastest, edge-ready way to pull link-preview tags from HTML (OpenGraph, `<meta>` and others) – no DOM, zero dependencies, lowest-memory, all in just \~5 kB.**
 
-**hypertag** parses an HTML string and returns the tag attributes you ask for as plain objects: a `getElementsByTagName` that needs no DOM. Zero dependencies, about 0.8 kB, and in the benchmark below the fastest and smallest way to pull `<meta>`, `<link>`, and other tags out of HTML. Runs on Node, Deno, Bun, and the edge.
+You're building a link-preview (unfurl) endpoint, and it has to run on an edge runtime – a Cloudflare Worker, Deno Deploy, a Vercel Edge function. The job itself is narrow: pull a dozen fields – the Open Graph and other meta tags, a little JSON-LD – out of the `<head>`. But a full DOM parser is a lot to bring to it – hundreds of kilobytes to ship, and a whole document tree built and held in memory on every request. What you want is something that stays small, starts fast, and leaves nothing behind between requests.
 
-## ✨ Features
-  + ✅  **Tiny.** ~0.8 kB bundled, 35x smaller than htmlparser2 and ~1000x smaller than jsdom, so it barely touches an edge bundle.
-  + ✅  **Zero dependencies.** Nothing to audit, break, or bloat your tree.
-  + ✅  **Just the tags.** Name the tags you want, get their attributes back as plain objects. No DOM, no selectors to learn.
-  + ✅  **Fast and light.** 2.6x faster than node-html-parser and up to 95x faster than the DOM parsers, and it builds no tree so it retains almost no memory.
-  + ✅  **Auditable.** One small file you can read in a minute, 100% test coverage. [![ci-badge]][ci-link]
+**hypertag** does exactly that job: give it a URL – or HTML you already fetched – and get the link-preview card back as a plain object: title, description, image, icon and 17 more fields, read from OpenGraph, Twitter cards and JSON-LD. One pass per tag type, no tree, no DOM. Zero dependencies, about 5 kB, no `nodejs_compat` flag, and it holds essentially no memory between requests. Runs on Node, Deno, Bun, and every edge runtime.
+
+Under the extractor is a general HTML tag parser you can drop to for raw tags – `parse(html, 'meta')` → plain objects, about 0.7 kB. That floor is why the extractor stays this small; it's there when you want it, but the extractor is the point.
 
 ## 📦 Install
 
@@ -17,390 +14,122 @@
 npm install hypertag
 ```
 
-## 💻 Use
-```js
-import parse from 'hypertag'          // ESM
-// const parse = require('hypertag')  // CommonJS
+## 🔗 Build a link-preview endpoint
 
-const html = `
-  <html><head>
-    <meta name="hello" content="world">
-    <meta name="hello" content="moon">
-  </head><body>
-    <div><h1>Hello, world!</h1></div>
-  </body></html>
-`
-
-const result = parse(html, 'meta')
-console.log(result)
-
-[
-  {
-    $tag: 'meta',
-    name: 'hello',
-    content: 'world'
-  },
-  {
-    $tag: 'meta',
-    name: 'hello',
-    content: 'moon'
-  }
-]
-```
-
-The matched tag name is stored under `$tag` — a `$`-prefixed key so it can never collide with a
-real attribute, and dot-accessible (`result[0].$tag`). With `{content: true}` the element's
-content lands under `$content` the same way. Both keys are configurable via `tagKey` /
-`contentKey`.
-
-### Examples
-
-#### Getting Favicons
+The whole job, on the edge, in one file. Give `fromUrl` a URL and it fetches the page and returns the card – OpenGraph → Twitter → JSON-LD fallbacks, entity decoding, relative-URL resolution, tracking-param stripping, and a best-effort favicon, all built in:
 
 ```js
-const result = parse(html, 'link')
-  .filter(({rel}) => /^(shortcut\s+)?icon/i.test(rel ?? ''))
-
-[
-  {
-    $tag: 'link',
-    rel: 'icon',
-    href: 'favicon.png',
-    sizes: '16x16'
-    type: 'image/png'
-  }
-]
-```
-
-#### Getting OpenGraph Images
-```js
-const result = parse(html, 'meta')
-  .filter(({property}) => property?.toLowerCase() === 'og:image')
-
-[
-  {
-    $tag: 'meta',
-    property: 'og:image',
-    content: 'http://static01.nyt.com/images/2015/02/19/arts/international/19iht-btnumbers19A/19iht-btnumbers19A-facebookJumbo-v2.jpg'
-  }
-]
-```
-
-#### Getting element content (title, JSON-LD)
-
-Attributes aren't everything - the page title and JSON-LD live *between* the tags. Pass
-`{content: true}` and each result gains a `$content` key with the element's content:
-
-```js
-parse(html, 'title', {content: true})[0].$content       // 'HTTP | MDN'
-
-parse(html, 'script', {content: true})
-  .filter(s => /ld\+json/i.test(s.type ?? ''))
-  .map(s => JSON.parse(s.$content))                       // the page's JSON-LD objects
-```
-
-Content capture is reliable for HTML raw-text (`script`, `style`) and escapable-raw-text
-(`title`, `textarea`) elements - the ones that actually carry metadata. For elements that can
-nest (`div`, `p`, …) it is best-effort and stops at the first close tag; an unclosed element is
-skipped rather than throwing or hanging. Content comes back raw - pair it with
-`hypertag/sanitize`'s `decode` for a `<title>`'s entities. (For arbitrary element text and
-traversal, reach for cheerio.)
-
-## 🧩 Recipes for modern runtimes
-
-Because hypertag is zero-dependency, tiny, and needs no DOM, it runs anywhere JavaScript does, including edge runtimes where `cheerio`/`jsdom` won't fit. Examples use the ESM `import`; swap for `const parse = require('hypertag')` under CommonJS.
-
-#### Cloudflare Workers / Vercel Edge: link-preview metadata
-
-```js
-import parse from 'hypertag'
+import {fromUrl} from 'hypertag'
 
 export default {
   async fetch(request) {
     const target = new URL(request.url).searchParams.get('url')
-    const html = await fetch(target).then(res => res.text())
-
-    const og = Object.fromEntries(
-      parse(html, 'meta')
-        .filter(m => m.property?.startsWith('og:'))
-        .map(m => [m.property.slice(3), m.content])
-    )
-
-    return Response.json(og) // { title, image, description, ... }
+    return Response.json(await fromUrl(target))
   }
 }
+// GET /?url=https://example.com/article →
+// {
+//   title:       'How the Web Works',
+//   description: 'A friendly introduction to browsers…',
+//   image:       'https://example.com/cover.png',
+//   url:         'https://example.com/article',
+//   icon:        'https://example.com/favicon.ico',
+//   author:      'Ada Lovelace',
+//   date:        '2026-01-02T03:04:05Z',
+//   publisher:   'Example',
+//   …            // 21 fields in all
+// }
 ```
 
-No `nodejs_compat`, no bundler, no polyfill. hypertag is a single dependency-free module.
-
-#### Next.js: Route Handler (App Router)
+Already fetched the HTML yourself – from a cache, a crawl, or a fetch with your own SSRF and caching rules? Hand the string straight to `metadata(html, url)` and skip the network step:
 
 ```js
-// app/api/preview/route.js
-import parse from 'hypertag'
+import {metadata} from 'hypertag'
 
-export const runtime = 'edge' // optional; runs on Node too
-
-export async function GET(request) {
-  const url = new URL(request.url).searchParams.get('url')
-  const html = await fetch(url).then(res => res.text())
-
-  const meta = parse(html, 'meta')
-  const pick = key => meta.find(m => m.name === key || m.property === key)?.content
-
-  return Response.json({
-    title: pick('og:title'),
-    description: pick('description') ?? pick('og:description'),
-    image: pick('og:image')
-  })
-}
+metadata(html, 'https://example.com/article')   // the same card, no fetch
 ```
 
-#### Deno / Bun: favicon discovery
+Either way it's the entire dependency footprint – no DOM shim, no bundler config, no native modules. Every field is filled from the first source that carries it (OpenGraph, then Twitter cards, then JSON-LD, then a sensible HTML fallback), decoded, and resolved against the page URL – so `image` is an absolute, de-tracked URL and `title` is real text, not `Rock &amp; Roll`. A field with no source is `null`, and nothing throws on a broken page. The fields come from a default rule set that is **data you can override**: pass your own `rules` to `extract(html, url, rules)`, each field listing its sources in preference order. See the [API reference](docs/api.md).
+
+Some pages can't be scraped at all – Twitter/X, TikTok and Instagram serve no useful HTML to a bot. `hypertag/oembed` maps those URLs to their provider's oEmbed endpoint **without** the page HTML, from a curated registry of 25 providers:
 
 ```js
-import parse from 'npm:hypertag' // Deno; on Bun: import parse from 'hypertag'
+import {oembedEndpoint, oembed} from 'hypertag'
 
-const html = await fetch('https://example.com').then(res => res.text())
-
-const icons = parse(html, 'link')
-  .filter(({rel}) => /\bicon\b/i.test(rel ?? ''))
-
-console.log(icons)
+const endpoint = oembedEndpoint('https://www.tiktok.com/@user/video/123')
+const embed = endpoint ? await oembed(endpoint) : null   // the provider's embed markup + data
 ```
 
-## 🎯 Selectors (opt-in)
+## 🪶 Small, fast, and low-memory
 
-The core stays selector-free. If you want CSS-like sugar, import the separate
-`hypertag/select` entry: it compiles a tag-plus-attributes selector into exactly the `parse` +
-`.filter()` you would have written by hand, and nothing more (no tree, no DOM, no combinators).
+It comes down to one design choice: hypertag builds no document tree. It scans the string once and returns plain objects, so there's almost nothing to ship and nothing held in memory after it returns.
+
+**The edge link-preview libraries.** The tools you'd actually weigh for this job – the ones that also run at the edge. Extraction speed on the same real pages, ship size gzipped, and correctness on 12 messy-but-valid cases with known-correct answers – linkpeek fetches its own HTML, so it isn't scored on the shared fixtures (the `–` cells). Reproduce with `cd benchmark && npm run bench:edge`:
+
+| edge link-preview lib | extract speed | ship (gz) | deps | edge | correct /12 |
+| --- | ---: | ---: | ---: | :---: | ---: |
+| **hypertag/meta** | **1x** | **5.0 kB** | **0** | ✅ | **12** |
+| openlink | 2.8x slower | 4.0 kB | 0 | ✅ | 6 |
+| linkpeek | – | 26.9 kB | 1 | ✅ | – |
+| open-graph-scraper-lite | \~80x slower | 630.8 kB | 3 | ⚠️ flag | 7 |
+
+Two of these fetch the page for you (openlink, linkpeek); hypertag keeps fetching a thin opt-in layer, so you hold the network step – caching, SSRF, antibot. openlink comes closest on size (a hair under at 4.0 kB), but hypertag extracts \~2.8x faster and is the only row that gets every messy case right: numeric and accented entities, `og:` written as `name=`, `utm_*` stripping, relative-URL resolution, and a JSON-LD fallback – at zero dependencies.
+
+**The tag parser underneath.** The \~0.7 kB `hypertag/parse` core is also the fastest and lightest way to pull raw tags. Same task for every library – from a real \~90 kB page, pull every `<meta>` and `<link>` (all nine return the same 79 tags); one sample run on Node 22, reproducible with `npm run bench`:
+
+| parser | speed | ship (gzip) | peak memory | Workers |
+| --- | ---: | ---: | ---: | :---: |
+| **hypertag/parse** | **1x** | **0.7 kB** | **51.8 MB** | ✅ |
+| htmlparser2 | 3.0x slower | 27.6 kB | 58.2 MB | ✅ |
+| node-html-parser | 4.1x slower | 82.9 kB | 65.9 MB | ✅ |
+| cheerio | 65x slower | 489.5 kB | 146.2 MB | ⚠️ flag |
+| jsdom | 127x slower | 774.9 kB | 179.6 MB | ❌ |
+
+The sharpest number is retained heap: hypertag holds about 0 MB after returning, versus 74.2 MB for jsdom. Full nine-parser table and method in [benchmark/](benchmark/).
+
+**vs Cloudflare's HTMLRewriter.** HTMLRewriter is the Workers runtime's own HTML tool, and it's excellent at what it's for: *streaming and rewriting* HTML as it passes through a response. It can extract too, but pulling a handful of fields into an object means wiring up element handlers, accumulating text chunks, and awaiting the stream – and it stops at raw strings, with no OpenGraph → Twitter → JSON-LD fallbacks, no entity decoding, no URL resolution, and no favicon ranking. hypertag hands you the cooked card in one call, and the same code runs off-Workers too. Rewriting HTML on the way through → HTMLRewriter; reading the fields out → hypertag.
+
+## 🧩 Parse the raw tags yourself
+
+Under the extractor is one general function you can drop to directly. `parse(source, tags)` scans the HTML once and returns the matched tags as plain objects – a `getElementsByTagName` with no DOM. Use it when you want the raw og tags, `<link>` tags, or anything else rather than the cooked card:
 
 ```js
-import select from 'hypertag/select'          // ESM
-// const select = require('hypertag/select')  // CommonJS
+import parse from 'hypertag/parse'
 
-select(html, 'link[rel=alternate]')
-// ≡ parse(html, 'link').filter(({rel}) => rel === 'alternate')
+parse('<meta name="x" content="y">', 'meta')   // [ { $tag: 'meta', name: 'x', content: 'y' } ]
+parse(html, ['meta', 'link'])                   // several at once; '*' matches every tag
 ```
 
-Compile once and reuse across many documents (mirrors `extend`):
+Want CSS-like filtering instead of a hand-written `.filter()`? `hypertag/select` compiles a selector into exactly that – no tree, no combinators:
 
 ```js
-import {compile} from 'hypertag/select'
+import select from 'hypertag/select'
 
-const alternates = compile('link[rel=alternate]')  // source => Tag[]
-alternates(htmlA)
-alternates(htmlB)
+select(html, 'link[rel=alternate]')             // matching <link> tags, in document order
 ```
 
-A selector is a tag name (`link`, `*`, or omitted = `*`) followed by any number of
-attribute clauses, AND-combined: `link[rel=alternate][hreflang]`. Supported operators:
+`hypertag/ld` reads and flattens a page's JSON-LD blocks, and `hypertag/sanitize` decodes entities and cleans URLs. The default `hypertag` import is everything, batteries included; reach for a single layer to ship only what that job needs – bundled, minified, gzipped:
 
-| clause | matches |
-| --- | --- |
-| `[attr]` | attribute is present (valueless or empty counts) |
-| `[attr=v]` | value equals `v` |
-| `[attr!=v]` | value differs from `v`, or the attribute is absent |
-| `[attr^=v]` | value starts with `v` |
-| `[attr$=v]` | value ends with `v` |
-| `[attr*=v]` | value contains `v` |
-| `[attr~=v]` | `v` is one of the whitespace-separated words in the value |
-| `[attr\|=v]` | value equals `v` or starts with `v-` (e.g. `en` matches `en-GB`) |
+| you import | ships (gzipped) | for |
+| --- | ---: | --- |
+| `hypertag` | 6.6 kB | everything, batteries included |
+| `hypertag/parse` | 0.7 kB | the core tag parser – any tag or attribute |
+| `hypertag/ld` | 0.9 kB | JSON-LD |
+| `hypertag/sanitize` | 1.4 kB | decode + clean values |
+| `hypertag/oembed` | 1.4 kB | oEmbed endpoints for un-scrapeable pages |
+| `hypertag/select` | 1.9 kB | CSS-like selectors + presets |
+| `hypertag/meta` | 5.0 kB | the whole 21-field link-preview card |
+| `hypertag/fetch` | 5.1 kB | `fromUrl`: fetch, then card |
 
-Values may be unquoted, single-, or double-quoted; the three are equivalent (`[rel=alternate]`
-≡ `[rel="alternate"]`). Unquoted values are matched a little more loosely than a strict CSS
-tokenizer would allow (e.g. `[property=og:image]` is accepted without quotes).
-
-A comma-separated **selector list** unions its groups, just like CSS:
-
-```js
-select(html, 'link[rel=canonical], meta[property^=og:]')
-// every <link rel=canonical> AND every <meta property^=og:>, in document order
-```
-
-Each group is a complete `tag + conditions` unit, and an element is kept when it satisfies
-**any one whole group** — that group's tag *and* that group's conditions together. Groups never
-cross: `a[x], b[y]` matches an `<a>` with `x` or a `<b>` with `y`, never an `<a y>` or a
-`<b x>`. Results stay in document order, and an element that several groups match still appears
-once. A comma inside a quoted attribute value (`[content="a,b"]`) is part of the value, not a
-group separator; a stray, leading, or trailing comma throws.
-
-**Matching is case-insensitive by default** — both the attribute name and the value. That
-mirrors a real HTML pipeline (the parser lowercases attribute names; metascraper matches meta
-values with the CSS `i` flag) and suits messy metadata, so `meta[property=og:title]` also
-catches `<meta property="OG:Title">`. This is a deliberate divergence from CSS, which matches
-values case-sensitively; append the CSS Level 4 **`s` flag** to force case-sensitive matching
-on a clause: `link[href=Logo.PNG s]`.
-
-Combinators (` `, `>`, `+`) and `.class`/`#id` shorthands are **not** supported — hypertag
-builds no tree — and a selector using them throws a `TypeError` rather than matching silently.
-
-### Presets
-
-Named shortcuts for the selectors you reach for most. Each is a pre-baked `select` that
-returns raw `Tag[]` — hypertag hands back tags, not cooked values, so you map them yourself:
-
-```js
-import {og, icons, canonical, title, jsonld} from 'hypertag/select'
-
-og(html)          // meta[property^=og:]      -> the OpenGraph tags
-icons(html)       // link[rel*=icon]          -> icon, shortcut icon, apple-touch-icon, mask-icon
-canonical(html)   // link[rel=canonical]
-```
-
-`title` and `jsonld` are **content-aware** — they turn on the core `content` option, so each
-result carries the element's content under `$content`:
-
-```js
-import {title, jsonld} from 'hypertag/select'
-import {decode} from 'hypertag/sanitize'
-
-decode(title(html)[0]?.$content)                    // the page title, entities decoded
-jsonld(html).map(s => JSON.parse(s.$content))        // the page's JSON-LD objects
-```
-
-The full set: `og`, `twitter`, `icons`, `canonical`, `stylesheets`, `alternates`, `title`,
-`jsonld` — also reachable as `select.og(html)` etc.
-
-### pick
-
-`pick` takes an ordered list of sources and returns the first one with a usable value — the
-preference fallback (`og:title` else `twitter:title` else …) you would otherwise hand-write.
-A source is a selector (read `options.attr`) or a `[selector, attr]` pair; reading `$content`
-gets element text. Blank and missing values fall through.
-
-```js
-import {pick} from 'hypertag/select'
-
-pick(html, ['meta[property=og:title]', 'meta[name=twitter:title]'], {attr: 'content'})
-pick(html, [['meta[property=og:url]', 'content'], ['link[rel=canonical]', 'href']])  // mixed attrs
-pick(html, [['title', '$content']])   // element text
-```
-
-Unlike a comma-group `select` (which returns matches in **document** order), `pick` treats the
-**list order as preference** and returns a single value. `pick.compile(sources)` bakes it once.
-
-## 🧼 Sanitize (opt-in)
-
-The core returns attribute values exactly as written, so HTML entities stay encoded
-(`Rock &amp; Roll`) and whitespace is untouched. The separate `hypertag/sanitize` entry
-decodes and tidies them:
-
-```js
-import sanitize, {decode, cleanUrl} from 'hypertag/sanitize'  // ESM
-// const sanitize = require('hypertag/sanitize')               // CommonJS
-
-sanitize(parse(html, 'meta'))          // decode + collapse whitespace on every attribute
-decode('caf&eacute; &#151; done')      // 'café — done'
-cleanUrl('/p?utm_source=x', base)      // resolve + strip tracking params
-```
-
-`sanitize` is polymorphic: hand it a string, a single tag, or the whole array from `parse`,
-and it returns the same shape with every string value decoded, trimmed, and its runs of
-horizontal whitespace collapsed (booleans and other values pass through). Line breaks are
-**preserved** - a newline in a description is content, not formatting.
-
-**Tiny and fast by design, pluggable when you need more.** The built-in decoder covers what
-real metadata actually uses — numeric references, the Windows-1252 remap that old CMSes emit
-(`&#151;` → `—`), and a common named set — in **~1.3 kB gzipped**, versus ~21 kB for
-[`entities`](https://github.com/fb55/entities) or ~30 kB for [`he`](https://github.com/mathiasbynens/he).
-On real pages it matches `entities` exactly. For the long tail (the full ~2,000 HTML5 named
-entities, or semicolon-less legacy refs), inject a full decoder and pay for it only then:
-
-```js
-import {decodeHTML} from 'entities'
-sanitize(parse(html, 'meta'), {decode: decodeHTML})
-```
-
-`cleanUrl` resolves a relative URL against a base and strips what a bare `new URL()` won't:
-credentials, `utm_*` tracking parameters, and `#:~:text=` fragment directives. It does **not**
-prettify text (no smart quotes) — hypertag returns what the page said.
-
-## 🔗 JSON-LD (opt-in)
-
-`hypertag/ld` reads the `<script type="application/ld+json">` blocks the core `content` option
-exposes and flattens them — including each block's `@graph` — into a list of plain objects.
-It is the first layer that works on JSON rather than HTML.
-
-```js
-import ld, {pick, asName, asUrl} from 'hypertag/ld'
-
-const graph = ld(html)                       // every JSON-LD object on the page
-pick(graph, 'datePublished', 'dateModified') // first present value across the graph
-asName(pick(graph, 'author'))                // coerce {name} / [{name}] shapes to a string
-asUrl(pick(graph, 'image'))                  // coerce {url} / {contentUrl} / [...] to a URL
-```
-
-A block whose body is not valid JSON is skipped, so one broken block never throws the page.
-
-## 🏷️ Metadata (opt-in)
-
-`hypertag/meta` is the top of the stack: a declarative extractor built on `select` + `ld` +
-`sanitize`. `metadata(html, url)` returns cooked fields using a default rule set:
-
-```js
-import metadata from 'hypertag/meta'
-
-metadata(html, 'https://example.com/page')
-// { title, description, image, url, author, date, publisher }
-```
-
-The engine is domain-agnostic; the rules are the only opinion, and they are **data** you can
-override. Each field lists its sources in preference order plus a normalizer (`text`, `url`,
-`raw`):
-
-```js
-import {extract, meta, link, content, ld, ldName, ldUrl} from 'hypertag/meta'
-
-const RULES = {
-  title: {text: [meta('og:title', 'twitter:title'), ld('headline', 'name'), content('title')]},
-  url:   {url:  [meta('og:url'), link('canonical'), ld('url')]}
-}
-extract(html, url, RULES)
-```
-
-`meta(...)` matches a key under **either `property` or `name`** — the two are used
-interchangeably in the wild (MDN writes its OpenGraph tags as `name=`), so this catches both.
-`extract.compile(rules)` bakes the selectors once for reuse across many pages.
+Every signature is in the [API reference](docs/api.md).
 
 ## 🚫 When not to reach for hypertag
 
-hypertag is an extraction toolkit built from small layers, not a full parser. Its core has no
-CSS selectors, no entity decoding, no DOM traversal, and it does not repair malformed or badly
-nested HTML the way a spec parser does. The opt-in layers add selectors (`hypertag/select`),
-value cleanup (`hypertag/sanitize`), JSON-LD (`hypertag/ld`) and a metadata ruleset
-(`hypertag/meta`) — but always over an HTML string you already have. hypertag never fetches:
-no networked oEmbed, no headless browser for JS-rendered pages, no antibot. If you need DOM
-traversal or HTML repair, reach for cheerio or jsdom; if you need to fetch pages, render
-JavaScript, or a maintained metadata ruleset with more fallbacks, reach for metascraper.
+hypertag turns a URL – or HTML you already have – into a metadata object. It does not run JavaScript, and its tag parser builds no tree – no DOM traversal, no mutation, no repair of badly nested markup the way a spec parser does. If you need to traverse or repair a full document, that's a job for a DOM library; to rewrite HTML inline as it streams through a Worker, use a streaming HTML rewriter; and for JavaScript-rendered pages, antibot, or a broader metadata ruleset with more per-field fallbacks, a headless browser or a full metadata scraper will serve you better.
 
-# Benchmarks 🍏🍊
+## 📖 API
 
-Every number here is reproducible. The comparison parsers live in `benchmark/`, isolated from the package:
-
-```sh
-cd benchmark && npm install && npm run bench
-```
-
-The task is identical for every library: from a real 90 kB page, pull every `<meta>` and `<link>` tag with its attributes (all nine return the same 79 tags). One sample run on Node 24 is shown below; absolute numbers vary by machine, the ratios are the point.
-
-Sorted by speed. Every metric is shown as a multiple of hypertag, so 1x is best and anything higher is worse.
-
-| parser | speed | bundle size | peak memory |
-| --- | --- | --- | --- |
-| **hypertag** | **11,742 ops/s · 1x** | **0.8 kB · 1x** | **49.9 MB · 1x** |
-| node-html-parser | 4,444 · 2.6x slower | 82.9 kB · 106x | 63.2 MB · 1.3x |
-| htmlparser2 | 2,941 · 4.0x slower | 27.6 kB · 35x | 59.0 MB · 1.2x |
-| html5parser | 2,232 · 5.3x slower | 2.4 kB · 3x | 57.1 MB · 1.1x |
-| domino | 1,980 · 5.9x slower | 90.4 kB · 115x | 81.8 MB · 1.6x |
-| linkedom | 1,031 · 11x slower | 94.6 kB · 121x | 72.8 MB · 1.5x |
-| parse5 | 513 · 23x slower | 47.2 kB · 60x | 83.7 MB · 1.7x |
-| cheerio | 353 · 33x slower | 489 kB · 625x | 166.3 MB · 3.3x |
-| jsdom | 123 · 95x slower | 775 kB · 989x | 240.9 MB · 4.8x |
-
-The sharpest single number is retained heap: hypertag keeps ~0 MB (it holds no tree) versus 74.5 MB for jsdom. See [benchmark/](benchmark/) for that column and the method.
-
-hypertag wins by doing less: it scans the string once and returns plain objects, with no DOM or tree to build and hold. That is also the tradeoff. If you need selectors, text content, traversal, or mutation, reach for node-html-parser or cheerio (see **When not to reach for hypertag** above). Most run at the edge too (cheerio needs a Node-compat flag); they just cost more to ship.
+Every signature, option, and return value lives in the **[API reference → `docs/api.md`](docs/api.md)** – every entry point. TypeScript types ship in the package. How the layers fit together, and why, is in [`CONTEXT.md`](CONTEXT.md).
 
 [npm-version-badge]:    https://flat.badgen.net/npm/v/hypertag
 [npm-license-badge]:    https://flat.badgen.net/npm/license/hypertag

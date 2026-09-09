@@ -25,14 +25,14 @@ npm start           # extraction parity vs open-graph-scraper-lite, over saved f
 
 | library | ship size (gz) | vs hypertag | deps | shape |
 | --- | ---: | ---: | --- | --- |
-| openlink | 4.0 kB | 0.75x | 0 | fetch + extract |
-| **hypertag/meta** | **5.3 kB** | **1x** | **0** | extract (fetch opt-in) |
-| linkpeek | 26.9 kB | 5.1x | htmlparser2 | fetch + extract |
-| open-graph-scraper-lite | 630.8 kB | 119x | cheerio, chardet, validator | extract only |
+| openlink | 4.0 kB | 0.80x | 0 | fetch + extract |
+| **hypertag/meta** | **5.0 kB** | **1x** | **0** | extract (fetch opt-in) |
+| linkpeek | 26.9 kB | 5.4x | htmlparser2 | fetch + extract |
+| open-graph-scraper-lite | 630.8 kB | 126x | cheerio, chardet, validator | extract only |
 
-hypertag/meta ships a **21-field** card (a superset of openlink's extractable field set) in 5.3 kB,
+hypertag/meta ships a **21-field** card (a superset of openlink's extractable field set) in 5.0 kB,
 0 deps. Two honest reads:
-- Against the **true extraction peer** (`open-graph-scraper-lite`), hypertag is **119x smaller** –
+- Against the **true extraction peer** (`open-graph-scraper-lite`), hypertag is **126x smaller** –
   it is cheerio underneath, so "lite" still ships a full parser tree.
 - `openlink` is a hair **smaller** than hypertag/meta *and* fetches. So the honest superlative is
   scoped: hypertag is the smallest way to **extract** metadata from HTML you already have – not
@@ -51,26 +51,29 @@ Same task, 6 saved real pages, fields `{title, description, image, url}`:
 
 Identical coverage, and 23/24 identical values. The single difference is `hypertag/meta`
 returning a **cleaner** image URL – it strips the `utm_*` tracking parameters that
-`open-graph-scraper-lite` leaves on Wikipedia's `og:image`. So the 119x size win costs nothing
+`open-graph-scraper-lite` leaves on Wikipedia's `og:image`. So the 126x size win costs nothing
 in fields found or values produced.
 
-## Speed and memory vs openlink (`npm run perf`)
+## Speed vs the other extractors (`npm run perf`)
 
 `openlink`'s public `preview(url)` fetches, so this times its internal `parse` + `extract`
-(the same extraction work minus the network, which if anything flatters openlink), over the
-same 6 saved pages. Container numbers are relative, not absolute – the ratio is the point.
+(the same extraction work minus the network, which if anything flatters openlink);
+`open-graph-scraper-lite` builds a cheerio tree per call. Same 6 saved pages. Container
+numbers are relative, not absolute – the ratio is the point.
 
-| | speed | retained memory (GC forced) |
+| | extract speed | retained memory (GC forced) |
 | --- | ---: | ---: |
-| **hypertag/meta** | **~2.5x** | ~0 MB |
-| openlink (parse+extract) | 1x | ~0 MB |
+| **hypertag/meta** | **1x** | ~0 MB |
+| openlink (parse+extract) | 2.8x slower | ~0 MB |
+| open-graph-scraper-lite (cheerio) | ~80x slower | builds a tree |
 
-hypertag is ~2x faster **despite doing more per call** (JSON-LD, full entity decode, URL
-cleaning, favicon ranking). The reason: `openlink` runs ~30 separate full-string regex scans
-per page (one `html.match()` per field), each re-scanning the whole document; hypertag scans
-once and reads the parsed attributes. Memory is a **wash** – both are treeless, so neither
-retains a tree. (The dramatic memory story is only against DOM builders like jsdom/cheerio, in
-the main benchmark.)
+hypertag is ~2.8x faster than openlink **despite doing more per call** (JSON-LD, full entity
+decode, URL cleaning, favicon ranking): `openlink` runs ~30 separate full-string regex scans
+per page (one `html.match()` per field), each re-scanning the whole document, while hypertag
+scans once and reads the parsed attributes. `open-graph-scraper-lite` is ~80x slower because it
+parses the whole document into a cheerio tree before reading a field. Memory between the two
+treeless scanners is a **wash** – both retain ~0; the dramatic memory story is only against DOM
+builders like jsdom/cheerio (main benchmark).
 
 ## Correctness (`npm run correctness`)
 

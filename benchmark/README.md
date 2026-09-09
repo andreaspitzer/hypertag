@@ -15,6 +15,7 @@ npm run bench          # speed, then size, then memory
 npm run bench:speed
 npm run bench:size
 npm run bench:memory
+npm run bench:layers   # hypertag's own eight entry points, the README per-layer size table
 npm run bench:select   # the hypertag/select layer vs a hand-written parse().filter()
 npm run bench:og       # hypertag + select vs metascraper, on OpenGraph extraction
 npm run bench:unified  # the reverse: metascraper's home turf (unified metadata + fallbacks)
@@ -52,6 +53,13 @@ fallback rules, a different and larger job.
 - **size.mjs** the JavaScript you ship to do the task: a minimal entry per
   library is bundled with esbuild (`--bundle --minify`, esm, Node built-ins
   external) and gzipped. This counts the library's own code, not Node.
+- **layer-sizes.mjs** the same esbuild/gzip methodology turned inward on
+  hypertag's own eight entry points (the `hypertag` barrel, the `hypertag/parse`
+  core, and the six opt-in layers). Each row imports that entry the way a
+  consumer uses it and sinks the result, so tree-shaking applies; it emits the
+  exact per-layer table the README's "you import / ships (gzipped)" section
+  quotes, so those figures have one committed source (matches the `meta`=5.0 kB
+  figure in the edge-libs footprint table).
 - **memory.mjs** peak RSS and retained heap, one child process per library so
   nothing else is loaded, run with `--expose-gc` so retained heap is measured
   after a full collection. Memory is the noisiest of the three: treat it as an
