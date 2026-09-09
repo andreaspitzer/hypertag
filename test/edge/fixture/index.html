@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--
+      hypertag edge-e2e tier-2 fixture (ticket 12).
+
+      This page is the controlled target the tier-2 check hits over the REAL
+      network. It is published to GitHub Pages by .github/workflows/pages.yml so
+      that its directory root is served at the site root:
+
+        https://andreaspitzer.github.io/hypertag/
+
+      Everything below is deliberately fixed and deterministic - test/edge/tier2.mjs
+      asserts EXACT-MATCH on the card fields against these known values, so DO NOT
+      change the og:* content without updating the EXPECTED table in tier2.mjs.
+
+      Notes that make the expected card deterministic regardless of where the page
+      is served from (the live Pages URL or a localhost validation server):
+        - og:title carries an HTML entity (&amp;) so the decoded title proves entity
+          decoding fires (never merely "a card came back").
+        - og:title also differs from <title>, so the match proves source fallback
+          ordering (og:title beats <title>).
+        - og:image and og:url are ABSOLUTE, so cleanUrl resolves them to the Pages
+          URL even when the page is fetched from http://localhost during validation.
+    -->
+    <title>hypertag edge-e2e fixture</title>
+    <meta property="og:title" content="hypertag edge-e2e fixture &amp; card" />
+    <meta
+      property="og:description"
+      content="A controlled, deterministic fixture page for hypertag tier-2 edge tests."
+    />
+    <meta property="og:image" content="https://andreaspitzer.github.io/hypertag/card.png" />
+    <meta property="og:url" content="https://andreaspitzer.github.io/hypertag/" />
+  </head>
+  <body>
+    <h1>hypertag edge-e2e fixture &amp; card</h1>
+    <p>
+      A controlled, deterministic fixture page for hypertag tier-2 edge tests. See
+      <code>test/edge/tier2.mjs</code> for the exact-match assertions run against this page.
+    </p>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+# Cloudflare Workers config for the ephemeral tier-2 deploy check (ticket 13).
+#
+# The deploy-check script (deploy-check.mjs) copies this file next to a bundled
+# consumer and overrides `name` per CI run (`wrangler versions upload --name
+# hypertag-edge-e2e-<unique>`) so parallel runs never collide and teardown is exact.
+#
+# No `nodejs_compat` / `compatibility_flags`: the shared handler and hypertag use only
+# web-standard APIs (native `fetch`, Request/Response), so none is needed (ticket 04).
+name = "hypertag-edge-e2e"
+main = "worker.mjs"
+compatibility_date = "2025-06-01"
+
+# workers.dev subdomain + version preview URLs: a zone/custom domain is not needed, and
+# `wrangler versions upload` returns a `*.workers.dev` preview URL the CI curls without
+# promoting anything over a live route (ticket 08's ephemeral model).
+workers_dev = true
+preview_urls = true
