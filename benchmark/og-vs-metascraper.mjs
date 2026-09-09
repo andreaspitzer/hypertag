@@ -25,7 +25,7 @@ const FIELDS = ['title', 'description', 'image', 'url']
 // child process measuring one contender never loads the other.
 const contenders = {
   hypertag: async () => {
-    const {default: select} = await import('../select.mjs')
+    const {default: select} = await import('../select.js')
     return () => {
       const tags = select(html, 'meta[property^=og:]')
       const m = Object.fromEntries(tags.map(t => [t.property, t.content]))
@@ -192,8 +192,8 @@ function footprint() {
 
   // hypertag ships as its own files with zero dependencies.
   const hypertagFiles = [
-    'hypertag.js', 'hypertag.mjs', 'select.js', 'select.mjs',
-    'index.d.ts', 'index.d.mts', 'select.d.ts', 'select.d.mts',
+    'parse.js', 'select.js',
+    'parse.d.ts', 'select.d.ts',
     'package.json', 'README.md', 'LICENSE'
   ]
   let hypertagBytes = 0

@@ -12,7 +12,7 @@
 // jsdom). fast-html is intentionally excluded: it is unmaintained (v0.1.2, last
 // published ~2016) and its documented API returns undefined on modern Node.
 
-import hypertag from '../hypertag.mjs'
+import hypertag from '../parse.js'
 
 export const NAMES = [
   'hypertag',
@@ -155,7 +155,7 @@ export async function loadParsers() {
 // size.mjs only measures which library code the bundler pulls in, and the
 // import plus one call already pulls all of it.
 export const importSnippets = {
-  hypertag: "import parse from '../hypertag.mjs'; export const run = h => parse(h, ['meta','link'])",
+  hypertag: "import parse from '../parse.js'; export const run = h => parse(h, ['meta','link'])",
   html5parser: "import {parse} from 'html5parser'; export const run = h => parse(h)",
   'node-html-parser': "import {parse} from 'node-html-parser'; export const run = h => parse(h).querySelectorAll('meta, link').map(el=>({...el.attributes}))",
   htmlparser2: "import {Parser} from 'htmlparser2'; export const run = h => { const o=[]; const p=new Parser({onopentag(n,a){if(n==='meta'||n==='link')o.push({...a})}}); p.write(h); p.end(); return o }",

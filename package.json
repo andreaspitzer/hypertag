@@ -1,136 +1,79 @@
 {
   "name": "hypertag",
   "version": "0.1.0",
-  "description": "The fastest, smallest, lowest-memory way to turn HTML into a link-preview card: OpenGraph, Twitter, JSON-LD and favicon in ~5 kB, no DOM, zero dependencies. Built for the edge; runs on Node, Deno, Bun and Cloudflare Workers.",
+  "description": "The fastest, edge-ready way to pull link preview tags from HTML into one card: Open Graph, Twitter cards, JSON-LD, meta tags and favicon – ~5 kB, no DOM, zero dependencies, lowest-memory. Runs on Node, Deno, Bun and Cloudflare Workers.",
   "keywords": [
     "opengraph",
     "open-graph",
-    "og",
-    "og-image",
     "link-preview",
-    "html-metadata",
-    "metadata",
+    "unfurl",
+    "og-tags",
     "meta-tags",
-    "meta",
+    "html-metadata",
+    "html-parser",
     "cloudflare-workers",
     "edge",
-    "deno",
-    "bun",
-    "html-parser",
-    "html",
-    "parser",
     "favicon"
   ],
   "author": "Andreas Pitzer <hopster@gmail.com> (https://github.com/andreaspitzer)",
   "repository": "andreaspitzer/hypertag",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "types": "./index.d.ts",
-  "main": "./hypertag.js",
-  "module": "./hypertag.mjs",
+  "main": "./index.js",
   "exports": {
     ".": {
-      "import": {
-        "types": "./index.d.mts",
-        "default": "./hypertag.mjs"
-      },
-      "require": {
-        "types": "./index.d.ts",
-        "default": "./hypertag.js"
-      }
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./parse": {
+      "types": "./parse.d.ts",
+      "default": "./parse.js"
     },
     "./select": {
-      "import": {
-        "types": "./select.d.mts",
-        "default": "./select.mjs"
-      },
-      "require": {
-        "types": "./select.d.ts",
-        "default": "./select.js"
-      }
+      "types": "./select.d.ts",
+      "default": "./select.js"
     },
     "./sanitize": {
-      "import": {
-        "types": "./sanitize.d.mts",
-        "default": "./sanitize.mjs"
-      },
-      "require": {
-        "types": "./sanitize.d.ts",
-        "default": "./sanitize.js"
-      }
+      "types": "./sanitize.d.ts",
+      "default": "./sanitize.js"
     },
     "./ld": {
-      "import": {
-        "types": "./ld.d.mts",
-        "default": "./ld.mjs"
-      },
-      "require": {
-        "types": "./ld.d.ts",
-        "default": "./ld.js"
-      }
+      "types": "./ld.d.ts",
+      "default": "./ld.js"
     },
     "./meta": {
-      "import": {
-        "types": "./meta.d.mts",
-        "default": "./meta.mjs"
-      },
-      "require": {
-        "types": "./meta.d.ts",
-        "default": "./meta.js"
-      }
+      "types": "./meta.d.ts",
+      "default": "./meta.js"
     },
     "./fetch": {
-      "import": {
-        "types": "./fetch.d.mts",
-        "default": "./fetch.mjs"
-      },
-      "require": {
-        "types": "./fetch.d.ts",
-        "default": "./fetch.js"
-      }
+      "types": "./fetch.d.ts",
+      "default": "./fetch.js"
     },
     "./oembed": {
-      "import": {
-        "types": "./oembed.d.mts",
-        "default": "./oembed.mjs"
-      },
-      "require": {
-        "types": "./oembed.d.ts",
-        "default": "./oembed.js"
-      }
+      "types": "./oembed.d.ts",
+      "default": "./oembed.js"
     },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
   "files": [
-    "hypertag.js",
-    "hypertag.mjs",
+    "index.js",
     "index.d.ts",
-    "index.d.mts",
+    "parse.js",
+    "parse.d.ts",
     "select.js",
-    "select.mjs",
     "select.d.ts",
-    "select.d.mts",
     "sanitize.js",
-    "sanitize.mjs",
     "sanitize.d.ts",
-    "sanitize.d.mts",
     "ld.js",
-    "ld.mjs",
     "ld.d.ts",
-    "ld.d.mts",
     "meta.js",
-    "meta.mjs",
     "meta.d.ts",
-    "meta.d.mts",
     "fetch.js",
-    "fetch.mjs",
     "fetch.d.ts",
-    "fetch.d.mts",
     "oembed.js",
-    "oembed.mjs",
-    "oembed.d.ts",
-    "oembed.d.mts"
+    "oembed.d.ts"
   ],
   "engines": {
     "node": ">=18"
@@ -140,7 +83,7 @@
     "pretest": "npm run lint",
     "lint": "biome lint",
     "format": "biome format --write",
-    "smoke": "node scripts/smoke.cjs && node scripts/smoke.mjs",
+    "smoke": "node scripts/smoke.js",
     "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"

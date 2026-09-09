@@ -12,7 +12,7 @@
 //   - `hypertag/meta` is the shipped metadata layer: metadata(html, url), a declarative rules
 //     table over select + ld + sanitize. It is what a consumer actually runs, and it reaches
 //     the fields that live between tags (<title> text, JSON-LD) and normalizes values.
-import parse from 'hypertag'
+import parse from 'hypertag/parse'
 import metadata from 'hypertag/meta'
 import metascraperFactory from 'metascraper'
 import metascraperAuthor from 'metascraper-author'

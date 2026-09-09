@@ -1,5 +1,5 @@
 import test from 'ava'
-import parse from '../hypertag.js'
+import parse from '../parse.js'
 import sanitize from '../sanitize.js'
 
 const {decode, cleanUrl} = sanitize

@@ -1,6 +1,6 @@
 import {readFile} from 'node:fs/promises'
 import test from 'ava'
-import parse from '../hypertag.js'
+import parse from '../parse.js'
 import select from '../select.js'
 
 const {compile, pick} = select

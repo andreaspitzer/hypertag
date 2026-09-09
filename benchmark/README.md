@@ -79,7 +79,7 @@ Absolute numbers vary by machine and run. The ratios are the point.
 
 | parser | gzipped | direct deps |
 | --- | ---: | ---: |
-| hypertag | 0.8 kB | 0 |
+| hypertag | 0.7 kB | 0 |
 | html5parser | 2.4 kB | 0 |
 | htmlparser2 | 27.6 kB | 5 |
 | parse5 | 47.2 kB | 2 |

@@ -18,7 +18,7 @@
 // one group in its entirety - the group's own tag AND that group's own conditions together.
 // Groups never cross-pollinate (`a[x], b[y]` never matches `<a y>` or `<b x>`). Results come
 // back in document order, with each element appearing once even if several groups match it.
-const parse = require('./hypertag.js')
+import parse from './parse.js'
 
 // The leading tag name, or `*`, or nothing (an omitted tag means `*`). parse() already
 // matches tag names case-insensitively (its regex carries the `i` flag).
@@ -40,12 +40,6 @@ const operators = {
   '|=': (v, value) => v === value || v.startsWith(`${value}-`)
 }
 
-module.exports = select
-Object.assign(module.exports, {
-  select,
-  compile: select.compile
-})
-
 function select(source, selector, options) {
   return select.compile(selector, options)(source)
 }
@@ -58,7 +52,7 @@ select.compile = (selector, options) => {
   if (groups.length === 1) {
     const {tag, conditions} = groups[0]
     const predicate = toPredicate(conditions)
-    // `cache` (optional) is a caller-owned parse memo threaded to parse; see hypertag.js.
+    // `cache` (optional) is a caller-owned parse memo threaded to parse; see parse.js.
     return (source, cache) => parse(source, tag, options, cache).filter(predicate)
   }
 
@@ -230,3 +224,16 @@ function lookup(tag, name, caseSensitive) {
   }
   return undefined
 }
+
+export default select
+export {select}
+export const compile = select.compile
+export const pick = select.pick
+export const og = select.og
+export const twitter = select.twitter
+export const icons = select.icons
+export const canonical = select.canonical
+export const stylesheets = select.stylesheets
+export const alternates = select.alternates
+export const title = select.title
+export const jsonld = select.jsonld

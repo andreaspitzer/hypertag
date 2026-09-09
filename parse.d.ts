@@ -1,4 +1,4 @@
-// Type definitions for the ESM entry (`import ... from 'hypertag'`).
+// Type definitions for the core parser entry (`import parse from 'hypertag/parse'`).
 
 export interface ParseOptions {
   /**

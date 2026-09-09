@@ -245,9 +245,6 @@ const providers = [
   }
 ]
 
-module.exports = oembedEndpoint
-Object.assign(module.exports, { oembedEndpoint, providers })
-
 // Resolve the oEmbed endpoint for `url` from `list` (default: the curated providers), or null
 // when none matches. The result is ready to fetch: the target is added as url=, format=json.
 function oembedEndpoint(url, list = providers) {
@@ -269,3 +266,10 @@ function oembedEndpoint(url, list = providers) {
 function schemeToRegExp(scheme) {
   return new RegExp(`^${scheme.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')}$`)
 }
+
+// The default export stays the callable `oembedEndpoint`, with `providers` attached as a
+// property for parity with the previous CommonJS shape.
+Object.assign(oembedEndpoint, {oembedEndpoint, providers})
+
+export default oembedEndpoint
+export {oembedEndpoint, providers}

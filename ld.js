@@ -2,10 +2,7 @@
 // it takes the JSON-LD `<script type="application/ld+json">` bodies the core `content` option
 // exposes, parses them, and hands back plain objects to pick fields from. It knows nothing
 // about which field means what - that is the caller's (or the meta layer's) job. Zero deps.
-const parse = require('./hypertag.js')
-
-module.exports = ld
-Object.assign(module.exports, {ld, pick, asName, asUrl})
+import parse from './parse.js'
 
 // Flatten every JSON-LD block on the page (and each block's `@graph`) into one list of objects
 // to pick from. A block whose body is not valid JSON is skipped, so one broken block never
@@ -53,3 +50,10 @@ function asUrl(value) {
   if (value && typeof value === 'object') return value.url ?? value.contentUrl
   return value
 }
+
+// The default export stays the callable `ld`, with the helpers attached as properties for
+// parity with the previous CommonJS shape (the meta layer reads `ld.pick`, `ld.asName`, ...).
+Object.assign(ld, {ld, pick, asName, asUrl})
+
+export default ld
+export {ld, pick, asName, asUrl}

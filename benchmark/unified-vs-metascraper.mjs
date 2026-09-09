@@ -40,7 +40,7 @@ const fmt = n => Math.round(n).toLocaleString().padStart(10)
 // hand-written subset. The content option reads the <title> text, sanitize decodes the entity,
 // and cleanUrl resolves the relative image, so it now reaches every field.
 async function makeHypertag() {
-  const {extract, rules} = await import('../meta.mjs')
+  const {extract, rules} = await import('../meta.js')
   const run = extract.compile({
     title: rules.title,
     description: rules.description,
@@ -149,10 +149,9 @@ async function opsPerSec(task, {warmupMs = 250, sampleMs = 400, samples = 7} = {
 function footprint() {
   console.log('install footprint (dependency closure, approximate):')
   const hypertagFiles = [
-    'hypertag.js', 'hypertag.mjs', 'select.js', 'select.mjs', 'ld.js', 'ld.mjs',
-    'sanitize.js', 'sanitize.mjs', 'meta.js', 'meta.mjs', 'package.json', 'README.md', 'LICENSE',
-    'index.d.ts', 'index.d.mts', 'select.d.ts', 'select.d.mts', 'ld.d.ts', 'ld.d.mts',
-    'sanitize.d.ts', 'sanitize.d.mts', 'meta.d.ts', 'meta.d.mts'
+    'parse.js', 'select.js', 'ld.js', 'sanitize.js', 'meta.js',
+    'parse.d.ts', 'select.d.ts', 'ld.d.ts', 'sanitize.d.ts', 'meta.d.ts',
+    'package.json', 'README.md', 'LICENSE'
   ]
   let bytes = 0
   for (const f of hypertagFiles) {

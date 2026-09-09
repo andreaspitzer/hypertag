@@ -16,10 +16,7 @@
 // forwards a custom metadata rules table, and any other option (headers, signal, method, ...)
 // passes straight through to fetch as request init.
 
-const metadata = require('./meta.js')
-
-module.exports = fromUrl
-Object.assign(module.exports, {fromUrl, oembed})
+import metadata from './meta.js'
 
 async function fromUrl(url, options = {}) {
   const {fetch = globalThis.fetch, rules, oembedDiscovery, ...init} = options
@@ -44,6 +41,17 @@ async function oembed(endpoint, options = {}) {
   if (typeof fetch !== 'function') {
     throw new TypeError('hypertag/fetch: no fetch available - pass options.fetch')
   }
-  const response = await fetch(endpoint, {redirect: 'follow', headers: {accept: 'application/json'}, ...init})
+  const response = await fetch(endpoint, {
+    redirect: 'follow',
+    headers: {accept: 'application/json'},
+    ...init
+  })
   return response.json()
 }
+
+// The default export stays the callable `fromUrl`, with `oembed` attached as a property for
+// parity with the previous CommonJS shape.
+Object.assign(fromUrl, {fromUrl, oembed})
+
+export default fromUrl
+export {fromUrl, oembed}

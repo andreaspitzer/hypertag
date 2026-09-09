@@ -8,10 +8,10 @@
 //
 // A field's sources are tried in preference (list) order; the first with a usable value wins,
 // and the field's normalizer (`text` / `url` / `raw`) cleans it. Zero runtime dependencies.
-const parse = require('./hypertag.js')
-const select = require('./select.js')
-const ldLayer = require('./ld.js')
-const {sanitize, decode, cleanUrl} = require('./sanitize.js')
+import ldLayer from './ld.js'
+import parse from './parse.js'
+import select from './select.js'
+import {cleanUrl, decode, sanitize} from './sanitize.js'
 
 // ---- source helpers: declarative markers a rule lists in preference order ------------------
 // All variadic; the arguments are preference order (first key that yields a value wins).
@@ -283,8 +283,9 @@ function langOf(source) {
   return value === '' ? null : value
 }
 
-module.exports = metadata
-Object.assign(module.exports, {
+// The default export stays the callable `metadata`, with the engine, source helpers, default
+// rules and favicon functions attached as properties for parity with the CommonJS shape.
+Object.assign(metadata, {
   metadata,
   extract,
   rules,
@@ -298,3 +299,6 @@ Object.assign(module.exports, {
   favicon,
   favicons
 })
+
+export default metadata
+export {metadata, extract, rules, meta, link, content, attr, ld, ldName, ldUrl, favicon, favicons}

@@ -1,6 +1,6 @@
 import {readFile} from 'node:fs/promises'
 import test from 'ava'
-import parse from '../hypertag.js'
+import parse from '../parse.js'
 
 test('correctly parses relevant tags from twitter.com', async t => {
   const text = await readFile(new URL('./fixture-twitter.html', import.meta.url), 'utf-8')

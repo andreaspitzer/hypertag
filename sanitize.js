@@ -55,13 +55,6 @@ const entityPattern = /&(#\d+|#x[0-9a-f]+|[a-z][a-z0-9]*);/gi
 const horizontalPattern = /[^\S\n]+/g
 const aroundNewlinePattern = / *\n */g
 
-module.exports = sanitize
-Object.assign(module.exports, {
-  sanitize,
-  decode,
-  cleanUrl
-})
-
 // Clean a value: strings are decoded, whitespace-collapsed and trimmed; a Tag (or array of
 // Tags) is returned with each string value cleaned; anything else (boolean, number, null)
 // passes through. Recursive, so `parse()` output can be handed in directly. Pass
@@ -142,3 +135,10 @@ function cleanUrl(url, base) {
   }
   return parsed.href
 }
+
+// The default export stays the callable `sanitize`, with `decode` and `cleanUrl` attached as
+// properties for parity with the previous CommonJS shape.
+Object.assign(sanitize, {sanitize, decode, cleanUrl})
+
+export default sanitize
+export {sanitize, decode, cleanUrl}

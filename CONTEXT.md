@@ -30,13 +30,17 @@ rate-limiting back to the caller via a pluggable `fetch`. See ADR-0001's amendme
 
 | layer | package | knows about | responsibility | status |
 | --- | --- | --- | --- | --- |
-| 0 · core | `hypertag` | tags + attributes | scan HTML → flat `Tag[]`. Zero-dep, edge-sized. | shipped |
+| 0 · core | `hypertag/parse` | tags + attributes | scan HTML → flat `Tag[]`. Zero-dep, edge-sized. | shipped |
 | 1 · select | `hypertag/select` | tags + selectors | narrow and read tags (selectors, presets, `pick`). | shipped |
 | 1 · sanitize | `hypertag/sanitize` | values | decode / clean / resolve values. | shipped |
 | 2 · ld | `hypertag/ld` | JSON | unwrap JSON-LD shapes. First non-HTML code. | shipped |
 | 3 · meta | `hypertag/meta` | metadata conventions + a default opinion | declarative extractor: engine + source helpers + default rules (overridable). | shipped |
 | 4 · fetch | `hypertag/fetch` | the network, thinly | opt-in convenience: fetch a URL with native `fetch` → `metadata()`. Happy path only. | shipped |
 | product | separate, metalink-shaped | the hard parts of the network | antibot, caching, distribution, and the hard parts of fetching (non-UTF-8 decoding, SSRF, rate-limiting) – pluggable into the fetch layer, never baked in. | out of library scope |
+
+**Public entry points** (see ADR-0002). The bare `hypertag` import is the batteries-included
+barrel over every layer (named exports; no default); the core parser is imported as `hypertag/parse`.
+The package is ESM-only. The internal layering above is unchanged – only the public packaging differs.
 
 **Where new code goes.** A general mechanism over tags/selectors → `select`. A value-to-
 cleaner-value transform, field-agnostic → `sanitize`. Anything operating on parsed JSON

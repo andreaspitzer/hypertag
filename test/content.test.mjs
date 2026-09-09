@@ -1,5 +1,5 @@
 import test from 'ava'
-import parse from '../hypertag.js'
+import parse from '../parse.js'
 
 test('captures element content under the > key alongside attributes', t => {
   t.deepEqual(parse('<title>Hello, world!</title>', 'title', {content: true}), [

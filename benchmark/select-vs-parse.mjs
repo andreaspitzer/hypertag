@@ -11,8 +11,8 @@
 // baseline (same parse, a generic predicate instead of an inline one), while `eager`
 // additionally pays selector compilation on every call.
 import {readFileSync} from 'node:fs'
-import parse from '../hypertag.mjs'
-import select from '../select.mjs'
+import parse from '../parse.js'
+import select from '../select.js'
 
 const html = readFileSync(new URL('../test/fixture-twitter.html', import.meta.url), 'utf8')
 

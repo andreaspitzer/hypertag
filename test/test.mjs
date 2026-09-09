@@ -1,5 +1,5 @@
 import test from 'ava'
-import parseTags from '../hypertag.js'
+import parseTags from '../parse.js'
 
 const {stripComments, parseAttrs} = parseTags
 
