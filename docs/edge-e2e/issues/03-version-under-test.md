@@ -1,7 +1,7 @@
 # Version under test: local source, packed tarball, or published npm package
 
 Type: grilling
-Status: open
+Status: resolved
 
 ## Question
 
@@ -32,3 +32,23 @@ the real `hypertag@latest` is also wanted. Confirm or redirect.
 
 Output: the chosen version-under-test + the install/resolution mechanism per runtime, feeding
 tickets 04–07 and the harness tickets.
+
+## Answer
+
+**Chosen: the packed tarball (`npm pack`), pre-release, in CI.** A green run proves the exact
+files and `exports` map that will publish, catching a missing-file / wrong-subpath packaging bug
+that raw-source testing hides, while still gating *before* release (the `prepublishOnly` precedent).
+
+**Mechanism, once per CI run:** a `pack` job runs `npm pack` → `hypertag-<version>.tgz` and uploads
+it as a workflow artifact. Every runtime job downloads that one artifact and installs it into a
+throwaway consumer, then imports the **package subpaths** (never relative source paths):
+
+- **Node / Bun** – `npm install ./hypertag-*.tgz` (or `bun add ./hypertag-*.tgz`) in a temp consumer.
+- **Deno** – a consumer `package.json` with the tarball as a `file:` dependency + `deno install`, so
+  Deno resolves the bare/`npm:` specifier from its node_modules-backed cache (per ticket 05).
+- **Cloudflare Workers** – the test worker's `package.json` depends on the tarball; `npm install`;
+  `wrangler` (esbuild) bundles the subpath import (proves subpath resolution under wrangler v4).
+- **Vercel Edge** – the edge-function project depends on the tarball; Vercel installs + bundles it.
+
+**Optional add-on (not required):** a post-publish job that smokes the real `hypertag@latest` after
+release, to confirm what users actually get. Deferred – the pre-release tarball gate is the core.

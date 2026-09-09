@@ -1,7 +1,7 @@
 # Deployment model: ephemeral per-CI deploys vs a persistent endpoint
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 04, 05, 06
 
 ## Question
@@ -33,3 +33,30 @@ Decide also:
 Output: the chosen deployment model (per provider if hybrid), the teardown approach, and the
 handler-sharing decision – feeding the CI-structure decision (10) and the graduated endpoint +
 CI-wiring tickets.
+
+## Answer
+
+**Hybrid, dictated by what each platform actually supports for free CI (research 04/05/06):**
+
+- **Cloudflare Workers – ephemeral per-CI-run.** `wrangler versions upload` returns a preview URL
+  (no promotion over the live route); CI curls it, then a `finally` step runs
+  `wrangler delete --name <unique-per-run>` so teardown happens even on failure. Unique names avoid
+  collisions. (`wrangler deploy --temporary` is *not* usable – it is ignored once
+  `CLOUDFLARE_API_TOKEN` is set.)
+- **Vercel Edge – ephemeral preview.** `vercel deploy --yes` builds a fresh preview per run; CI
+  reaches it with the **Protection-Bypass** secret (`x-vercel-protection-bypass` header) since Hobby
+  preview URLs are protected by default. Previews expire on their own – no explicit teardown.
+- **Deno Deploy – persistent endpoint, redeployed on change.** The new platform has **no free
+  auto-teardown** (Sandboxes are Pro-only; `deployctl`/Classic are sunset). One long-lived app is
+  `deno deploy --prod`-redeployed when the library changes, and CI curls its stable URL.
+
+**Teardown / cost:** Cloudflare explicit `delete`; Vercel preview auto-expiry; Deno one standing
+minimal app. All three free-tier.
+
+**Same code, N providers: one shared edge-handler source + thin per-provider adapter shims** – the
+handler calls `fromUrl(fixtureUrl)` and returns the card as JSON; the shims are Workers
+`export default { fetch }`, Vercel a handler + `export const config = { runtime: 'edge' }`, Deno
+`Deno.serve(...)`. (Ties to the tier-2 contract in ticket 02.)
+
+**Auth on preview URLs:** only Vercel needs it (the `VERCEL_AUTOMATION_BYPASS_SECRET`); Cloudflare
+preview URLs and the Deno app URL are reachable without a secret.

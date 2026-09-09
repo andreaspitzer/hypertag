@@ -1,7 +1,7 @@
 # Tier-2 fetch-path contract: target, assertions, and what "real" means
 
 Type: grilling
-Status: open
+Status: resolved
 
 ## Question
 
@@ -34,3 +34,23 @@ Decide:
 Output: a written tier-2 contract (target strategy, fixture definition if any, assertion list,
 which runtimes get a network-real run) that the deployment-model decision (08) and the graduated
 endpoint tickets build against.
+
+## Answer
+
+The tier-2 contract – the one runtime-divergent surface (native `fetch` via `fromUrl`):
+
+1. **Target: a controlled static fixture page we own, published on GitHub Pages.** One canonical
+   URL with a fixed set of OpenGraph / Twitter / JSON-LD tags, hit by every runtime's `fromUrl`.
+   Rationale: it exercises **genuine cross-origin outbound egress** – the thing edge runtimes
+   actually restrict – with zero third-party flakiness and exact, known values. Rejected: a public
+   page (drifts / rate-limits → flaky), and the endpoint fetching **itself** (same-origin only, so
+   it would not prove real outbound egress). The fixture HTML is committed in-repo; enabling Pages
+   is folded into provisioning (ticket 09).
+2. **Assert: exact-match on `title` / `description` / `image` / `url`** against the fixture's known
+   values – this proves entity decoding, relative-URL resolution, and source fallback all fire, not
+   merely that a card came back.
+3. **Non-edge runtimes get a network-real run too:** a local Node / Bun / Deno tier-2 that calls
+   `fromUrl(fixtureUrl)` against the same Pages URL. Cheap, needs no deploy, and catches native-`fetch`
+   divergence (including Node's own).
+4. **Failure semantics confirmed:** `fromUrl` never throws on a broken page (returns nulls), so tier
+   2 asserts **positive extraction against the known-good fixture**, never "didn't throw".

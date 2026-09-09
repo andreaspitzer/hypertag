@@ -30,3 +30,39 @@ secret, where to click, minimum scopes) and hand it to the maintainer. The maint
 sign-ups and pastes the secrets. **Answer records** which secret names now exist (not their values)
 and any account-specific facts (project names, chosen region) that the CI wiring (ticket 10) and the
 endpoint tickets depend on.
+
+## Handover checklist (ready for the maintainer)
+
+Research (04/05/06) and the deployment model (08) are settled, so the exact secrets are known.
+Bun and Node need nothing. Create each account, then add the repo secrets below
+(Settings → Secrets and variables → Actions). The agent cannot create third-party accounts or mint
+tokens – this is yours to do; then tell me the secret **names** exist (not the values).
+
+**Cloudflare Workers** (ephemeral deploy)
+- [ ] Confirm a Cloudflare account (free plan is enough).
+- [ ] Create an API token with the **"Edit Cloudflare Workers"** template (Account → Workers
+      Scripts : Edit; add Account Settings : Read only if a later step needs it). Scope it to the one
+      account. → secret **`CLOUDFLARE_API_TOKEN`**
+- [ ] Record the account id. → secret **`CLOUDFLARE_ACCOUNT_ID`**
+
+**Deno Deploy** (persistent app – the new platform at console.deno.com, *not* Classic/`deployctl`)
+- [ ] Create an account + org + one app/project at console.deno.com; note the app name and region
+      (e.g. `us`).
+- [ ] New Access Token at console.deno.com/account/access-tokens. → secret **`DENO_DEPLOY_TOKEN`**
+- [ ] Tell me the app/project name + region (needed by the CI wiring, ticket 10).
+
+**Vercel Edge** (ephemeral preview; Hobby is fine)
+- [ ] Create an account and **pre-create the project** (so `VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` skip
+      linking in CI).
+- [ ] Token at Account Settings → Tokens. → secret **`VERCEL_TOKEN`**
+- [ ] Record org + project ids (from `.vercel/project.json` after one link). → secrets
+      **`VERCEL_ORG_ID`**, **`VERCEL_PROJECT_ID`**
+- [ ] Project Settings → Deployment Protection → generate a **Protection Bypass for Automation**
+      secret (preview URLs are protected by default on Hobby). → secret
+      **`VERCEL_AUTOMATION_BYPASS_SECRET`**
+
+**GitHub Pages** (tier-2 fixture host, per ticket 02)
+- [ ] Enable GitHub Pages for the repo so the committed fixture HTML is served at a stable URL.
+
+When done, this ticket's **Answer** records which secret names now exist (not their values) plus the
+Deno app name/region and the fixture's Pages URL, and then it can be marked resolved.

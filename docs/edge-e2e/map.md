@@ -47,33 +47,52 @@ later.
 
 <!-- index of closed tickets: one line each, gist + link; detail lives in the ticket -->
 
-- [Research: Cloudflare Workers](issues/04-research-cloudflare-workers.md) — viable free-tier target;
+- [Research: Cloudflare Workers](issues/04-research-cloudflare-workers.md) – viable free-tier target;
   wrangler v4 esbuild should resolve the ESM subpath exports (tier 1 proves it), `nodejs_compat`
   avoidable for the library, ephemeral `workers.dev` deploy→curl→delete works with a
   `CLOUDFLARE_API_TOKEN` (Workers Scripts:Edit) + account id. Catch: the test worker must avoid
   `node:assert`. Full facts in [`research/cloudflare-workers.md`](research/cloudflare-workers.md).
-- [Research: Deno + Deno Deploy](issues/05-research-deno.md) — local Deno resolves `npm:hypertag/*`
+- [Research: Deno + Deno Deploy](issues/05-research-deno.md) – local Deno resolves `npm:hypertag/*`
   from cache with no config and `node:assert` works there; **but `deployctl`/Deploy Classic were shut
-  down 20 Jul 2026** — current path is the `deno deploy` CLI + `DENO_DEPLOY_TOKEN`, free tier covers
+  down 20 Jul 2026** – current path is the `deno deploy` CLI + `DENO_DEPLOY_TOKEN`, free tier covers
   CI, yet there's **no free auto-teardown** (Sandboxes are Pro-only), which shapes the deployment
   model. Full facts in [`research/deno.md`](research/deno.md).
-- [Research: Vercel Edge](issues/06-research-vercel-edge.md) — ESM fits the V8-isolate edge runtime
+- [Research: Vercel Edge](issues/06-research-vercel-edge.md) – ESM fits the V8-isolate edge runtime
   (subpath proven by tier 1); ephemeral preview deploy works on Hobby via `vercel deploy --yes`
   (pre-create the project). Real blocker: **preview-URL protection** needs a Protection-Bypass secret
   to curl. Correction: use `export const config = {runtime:'edge'}`, not `export const runtime`. Full
   facts in [`research/vercel-edge.md`](research/vercel-edge.md).
-- [Research: Bun + Node](issues/07-research-bun-node.md) — both local-only in CI (no provisioning),
+- [Research: Bun + Node](issues/07-research-bun-node.md) – both local-only in CI (no provisioning),
   both honour the subpath `exports` map, both give a native-`fetch` tier-2 signal locally (stable
   fetch since Node v21). No `npm pack` needed for an in-repo harness (self-referencing); `node:assert`
   is safe on Bun/Node but not the cross-runtime LCD. Full facts in
   [`research/bun-node.md`](research/bun-node.md).
+- [Tier-1 smoke contract](issues/01-tier1-smoke-contract.md) – import the **package subpaths** (all
+  eight + barrel) from the installed packed tarball; reuse `scripts/smoke.js`'s export-shape contract
+  (barrel named-only, colliding helpers off it); assert parse / stripComments / metadata / favicon +
+  a **stubbed** `fromUrl`; one shared runtime-agnostic module using a **plain throwing assert** (never
+  `node:assert`), with thin per-runtime runners.
+- [Tier-2 fetch contract](issues/02-tier2-fetch-contract.md) – `fromUrl` hits **one controlled
+  GitHub Pages fixture** (real cross-origin egress, zero third-party flakiness); exact-match on
+  title / description / image / url; a local Node / Bun / Deno network-real run too; assert positive
+  extraction (never "didn't throw").
+- [Version under test](issues/03-version-under-test.md) – the **packed tarball** (`npm pack`),
+  pre-release, built once and installed into a throwaway consumer per runtime; package-subpath imports
+  only. Optional post-publish `hypertag@latest` smoke deferred.
+- [Deployment model](issues/08-deployment-model.md) – **hybrid**: Cloudflare ephemeral
+  (`versions upload` preview → curl → `delete`), Vercel ephemeral preview (Protection-Bypass secret),
+  Deno Deploy **persistent** (no free teardown). One shared edge handler + thin per-provider shims.
+- [CI workflow structure](issues/10-ci-workflow-structure.md) – a new `edge-e2e.yml` beside the
+  existing Node `smoke` job; tier 1 + local tier 2 as a runtime matrix on every push/PR (required,
+  gate release); the three deployed tier-2 jobs on default-branch / dispatch, **allowed to fail** so
+  a provider outage never reddens core CI.
 
-**Frontier now:** the three decision tickets (tier-1 contract, tier-2 contract, version-under-test)
-plus — newly unblocked by the research — [Deployment model](issues/08-deployment-model.md) and
-[Provision accounts + CI secrets](issues/09-provision-accounts-secrets.md). Ticket 10 (CI structure)
-stays blocked behind the deployment-model decision. A cross-cutting finding for ticket 01: the shared
-tier-1 assertion harness cannot rely on `node:assert` (fine on Node/Bun/Deno, not guaranteed on
-Workers/Vercel) — the lowest-common-denominator is a plain throwing assert.
+**Frontier now:** all contracts are settled. The one open item is the **HITL** ticket
+[Provision accounts + CI secrets](issues/09-provision-accounts-secrets.md) – its copy-pasteable
+checklist is ready, and the maintainer creates the Cloudflare / Deno Deploy / Vercel accounts +
+GitHub Pages and records the secret names. Everything buildable without secrets (the tier-1 harness +
+Node / Bun / Deno runners, the local tier-2, the shared edge handler, and the fixture) can proceed in
+parallel; the three deployed tier-2 jobs and their CI wiring wait on 09.
 
 ## Not yet specified
 

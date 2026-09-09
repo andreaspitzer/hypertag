@@ -1,7 +1,7 @@
 # Tier-1 smoke contract: what to assert, and via which import surface
 
 Type: grilling
-Status: open
+Status: resolved
 
 ## Question
 
@@ -31,3 +31,27 @@ Decide:
 Output: a written tier-1 contract (import surface, entry-point set, assertion list, harness shape)
 that tickets 04–07 and the graduated harness tickets build against. Ground it in the shipped
 `scripts/smoke.js` and the ESM/subpath facts in the map's Notes.
+
+## Answer
+
+The tier-1 contract, built on the packed-tarball decision (03):
+
+1. **Import surface: package subpaths only**, resolved against the installed tarball –
+   `hypertag` (barrel), `hypertag/parse`, `hypertag/meta`, `hypertag/fetch`, `hypertag/oembed`,
+   `hypertag/select`, `hypertag/sanitize`, `hypertag/ld`. This is the whole point of tier 1:
+   relative source paths would not exercise the `exports` map / ESM-only / bundling surface.
+2. **Entry points asserted: all eight subpaths + the barrel must load**, and the **export-shape
+   contract from `scripts/smoke.js` is reused**: the barrel is named-only (no default), and the
+   colliding helpers (`pick`, and the `meta`/`link`/`content` source helpers) are **not** on the
+   barrel, only on their own subpaths. Asserting all eight is cheap and gives fullest exports-map
+   coverage.
+3. **Assertions beyond "it imported":** keep a functional smoke that proves the code paths load –
+   `parse()` returns the expected tags, `stripComments()`, `metadata(html, url)` returns a card with
+   the expected fields, `favicon()` ranks – plus the **stubbed `fromUrl`** (a fake injected `fetch`)
+   to prove the fetch-layer module loads without touching the network. All real-network exercise is
+   tier 2 (ticket 02).
+4. **Harness shape: one shared, runtime-agnostic assertion module** that every runner imports, using
+   a **plain throwing assert – never `node:assert`** (the lowest common denominator: `node:assert`
+   is fine on Node/Bun/Deno but not guaranteed on Workers/Vercel). Per-runtime runners are thin:
+   Node/Bun/Deno execute the module as a script and exit non-zero on failure; Workers/Vercel wrap it
+   in a `fetch` handler that runs the asserts per request and returns a pass/fail body the CI curls.
