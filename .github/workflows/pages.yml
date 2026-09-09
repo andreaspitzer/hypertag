@@ -16,10 +16,11 @@ name: Pages
 # will not go live - the maintainer must switch it.
 
 on:
-  # Deploy when the fixture (or this workflow) changes on master.
+  # Deploy when the fixture (or this workflow) changes on develop (the stack's
+  # integration branch, where the edge-e2e work merges).
   push:
     branches:
-      - master
+      - develop
     paths:
       - test/edge/fixture/**
       - .github/workflows/pages.yml

@@ -6,20 +6,20 @@ name: edge-e2e
 #   * REQUIRED, every push + pull_request: tier 1 (import + parse, stubbed fetch) and
 #     LOCAL tier 2 (native fromUrl against a controlled fixture) across every runtime -
 #     Node 18/20/22/24, Bun, Deno. These gate the branch (see "Branch protection" below).
-#   * ALLOWED-TO-FAIL, push to master + workflow_dispatch only: the DEPLOYED tier-2 jobs
+#   * ALLOWED-TO-FAIL, push to develop + workflow_dispatch only: the DEPLOYED tier-2 jobs
 #     (Cloudflare Workers, Vercel Edge). They need provider secrets, so they never run on
 #     fork PRs, and continue-on-error keeps a provider outage from reddening core CI.
 #
 # Tier-2 fixture bootstrap: the local tier-2 default target (test/edge/tier2.mjs) is the
-# LIVE GitHub Pages fixture, which is only published once this branch reaches master
+# LIVE GitHub Pages fixture, which is only published once this branch reaches develop
 # (pages.yml). So on a PR that URL 404s. The matrix therefore serves the COMMITTED
 # fixture locally (test/edge/serve-fixture.mjs) and points the runner at it via
 # EDGE_E2E_FIXTURE_URL - a real native-fetch leg that does not depend on Pages. The
 # DEPLOYED jobs below hit the live Pages fixture (the real cross-origin target), which is
-# correct on master where the fixture is deployed.
+# correct on develop where the fixture is deployed.
 #
 # Branch protection (maintainer action, not encoded here): mark these required status
-# checks on master so tier 1 + local tier 2 gate merges/releases -
+# checks on develop (the integration branch) so tier 1 + local tier 2 gate merges -
 #   tier-1-and-local-tier-2 (Node 18), (Node 20), (Node 22), (Node 24), Bun, Deno.
 # Release stays gated via required checks, NOT via prepublishOnly (tier 2 touches the
 # network and would make npm publish fragile).
@@ -159,7 +159,7 @@ jobs:
     name: deployed-tier-2 (Cloudflare)
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -183,7 +183,7 @@ jobs:
     name: deployed-tier-2 (Vercel)
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.ref == 'refs/heads/master')
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     continue-on-error: true
     permissions:
