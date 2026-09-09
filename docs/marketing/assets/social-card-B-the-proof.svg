@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <title>hypertag – the fastest, edge-ready way to pull link-preview tags from HTML</title>
+  <!-- hypertag social preview – Concept B: "The proof" (claim-first, wordmark hero).
+       1280x640. Export to PNG at 2x for GitHub's social-preview upload.
+       Same rulebook as Concept A: neutral confidence, no competitor names,
+       endash not emdash, earned claims only, sizes in kB. -->
+  <defs>
+    <linearGradient id="bgB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0f17"/>
+      <stop offset="100%" stop-color="#101c2b"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bgB)"/>
+  <rect x="0" y="634" width="1280" height="6" fill="#38e0c8"/>
+
+  <!-- wordmark hero, centered -->
+  <text x="640" y="256" text-anchor="middle" font-size="104" font-weight="800" letter-spacing="1">
+    <tspan fill="#3f566d">&lt;/</tspan><tspan fill="#e8eef7">hypertag</tspan><tspan fill="#3f566d">&gt;</tspan>
+  </text>
+
+  <!-- one-line claim -->
+  <text x="640" y="322" text-anchor="middle" font-size="27" fill="#9fb2c6">The fastest, edge-ready way to pull link-preview tags from HTML.</text>
+  <text x="640" y="360" text-anchor="middle" font-size="27" fill="#9fb2c6">Open Graph, meta and JSON-LD, into one card.</text>
+
+  <!-- proof chips, large + centered -->
+  <g font-size="24" font-weight="700" text-anchor="middle">
+    <g transform="translate(300,430)">
+      <rect width="160" height="66" rx="33" fill="#38e0c8" fill-opacity="0.14" stroke="#38e0c8" stroke-opacity="0.5"/>
+      <text x="80" y="43" fill="#7ff0dd">fastest</text>
+    </g>
+    <g transform="translate(480,430)">
+      <rect width="200" height="66" rx="33" fill="#38e0c8" fill-opacity="0.14" stroke="#38e0c8" stroke-opacity="0.5"/>
+      <text x="100" y="43" fill="#7ff0dd">edge-ready</text>
+    </g>
+    <g transform="translate(700,430)">
+      <rect width="280" height="66" rx="33" fill="#38e0c8" fill-opacity="0.14" stroke="#38e0c8" stroke-opacity="0.5"/>
+      <text x="140" y="43" fill="#7ff0dd">lowest-memory</text>
+    </g>
+  </g>
+  <g font-size="24" font-weight="700" text-anchor="middle">
+    <g transform="translate(410,516)">
+      <rect width="180" height="66" rx="33" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+      <text x="90" y="43" fill="#dfe8f2">~5 kB</text>
+    </g>
+    <g transform="translate(610,516)">
+      <rect width="260" height="66" rx="33" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.12"/>
+      <text x="130" y="43" fill="#dfe8f2">0 dependencies</text>
+    </g>
+  </g>
+
+  <text x="640" y="616" text-anchor="middle" font-size="18" fill="#5f7a94">no DOM · Node · Deno · Bun · Cloudflare Workers</text>
+</svg>

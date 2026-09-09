@@ -1,0 +1,208 @@
+name: edge-e2e
+
+# Cross-runtime edge end-to-end checks, sitting BESIDE the Node-only smoke job in
+# ci.yml (that job stays as-is). Implements the CI-structure decision (ticket 10):
+#
+#   * REQUIRED, every push + pull_request: tier 1 (import + parse, stubbed fetch) and
+#     LOCAL tier 2 (native fromUrl against a controlled fixture) across every runtime -
+#     Node 18/20/22/24, Bun, Deno. These gate the branch (see "Branch protection" below).
+#   * ALLOWED-TO-FAIL, push to develop + workflow_dispatch only: the DEPLOYED tier-2 jobs
+#     (Cloudflare Workers, Vercel Edge). They need provider secrets, so they never run on
+#     fork PRs, and continue-on-error keeps a provider outage from reddening core CI.
+#
+# Tier-2 fixture bootstrap: the local tier-2 default target (test/edge/tier2.mjs) is the
+# LIVE GitHub Pages fixture, which is only published once this branch reaches develop
+# (pages.yml). So on a PR that URL 404s. The matrix therefore serves the COMMITTED
+# fixture locally (test/edge/serve-fixture.mjs) and points the runner at it via
+# EDGE_E2E_FIXTURE_URL - a real native-fetch leg that does not depend on Pages. The
+# DEPLOYED jobs below hit the live Pages fixture (the real cross-origin target), which is
+# correct on develop where the fixture is deployed.
+#
+# Branch protection (maintainer action, not encoded here): mark these required status
+# checks on develop (the integration branch) so tier 1 + local tier 2 gate merges -
+#   tier-1-and-local-tier-2 (Node 18), (Node 20), (Node 22), (Node 24), Bun, Deno.
+# Release stays gated via required checks, NOT via prepublishOnly (tier 2 touches the
+# network and would make npm publish fragile).
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# Default least privilege; the Vercel job widens id-token below for OIDC.
+permissions:
+  contents: read
+
+jobs:
+  # --- REQUIRED: tier 1 + local tier 2, Node 18/20/22/24 --------------------------------
+  node:
+    name: tier-1-and-local-tier-2 (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      # Install devDependencies so `npm pack` (inside the smoke driver) can run the
+      # repo's `prepare` (husky) lifecycle - without node_modules it fails "husky: not
+      # found". Mirrors ci.yml's test job.
+      - run: npm ci
+      - name: Tier 1 (import + parse, stubbed fetch)
+        run: npm run smoke:edge:tier1:node
+      - name: Start local fixture server (tier-2 bootstrap)
+        run: |
+          node test/edge/serve-fixture.mjs &
+          echo "FIXTURE_SERVER_PID=$!" >> "$GITHUB_ENV"
+          for _ in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:8787/ >/dev/null 2>&1; then
+              echo "fixture server up"
+              exit 0
+            fi
+            sleep 0.2
+          done
+          echo "fixture server failed to start" >&2
+          exit 1
+      - name: Local tier 2 (native fromUrl against committed fixture)
+        run: npm run smoke:edge:tier2:node
+        env:
+          EDGE_E2E_FIXTURE_URL: http://127.0.0.1:8787/
+      - name: Stop local fixture server
+        if: always()
+        run: kill "$FIXTURE_SERVER_PID" 2>/dev/null || true
+
+  # --- REQUIRED: tier 1 + local tier 2, Bun ---------------------------------------------
+  bun:
+    name: tier-1-and-local-tier-2 (Bun)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The pack/install orchestrator (pack-run.mjs) always runs on Node; only the tier
+      # entry runs under Bun. So set up both.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: oven-sh/setup-bun@v2
+      - run: npm ci
+      - name: Tier 1 (import + parse, stubbed fetch)
+        run: npm run smoke:edge:tier1:bun
+      - name: Start local fixture server (tier-2 bootstrap)
+        run: |
+          node test/edge/serve-fixture.mjs &
+          echo "FIXTURE_SERVER_PID=$!" >> "$GITHUB_ENV"
+          for _ in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:8787/ >/dev/null 2>&1; then
+              echo "fixture server up"
+              exit 0
+            fi
+            sleep 0.2
+          done
+          echo "fixture server failed to start" >&2
+          exit 1
+      - name: Local tier 2 (native fromUrl against committed fixture)
+        run: npm run smoke:edge:tier2:bun
+        env:
+          EDGE_E2E_FIXTURE_URL: http://127.0.0.1:8787/
+      - name: Stop local fixture server
+        if: always()
+        run: kill "$FIXTURE_SERVER_PID" 2>/dev/null || true
+
+  # --- REQUIRED: tier 1 + local tier 2, Deno --------------------------------------------
+  deno:
+    name: tier-1-and-local-tier-2 (Deno)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Node runs the orchestrator; only the tier entry runs under Deno.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - run: npm ci
+      - name: Tier 1 (import + parse, stubbed fetch)
+        run: npm run smoke:edge:tier1:deno
+      - name: Start local fixture server (tier-2 bootstrap)
+        run: |
+          node test/edge/serve-fixture.mjs &
+          echo "FIXTURE_SERVER_PID=$!" >> "$GITHUB_ENV"
+          for _ in $(seq 1 50); do
+            if curl -fsS http://127.0.0.1:8787/ >/dev/null 2>&1; then
+              echo "fixture server up"
+              exit 0
+            fi
+            sleep 0.2
+          done
+          echo "fixture server failed to start" >&2
+          exit 1
+      - name: Local tier 2 (native fromUrl against committed fixture)
+        run: npm run smoke:edge:tier2:deno
+        env:
+          EDGE_E2E_FIXTURE_URL: http://127.0.0.1:8787/
+      - name: Stop local fixture server
+        if: always()
+        run: kill "$FIXTURE_SERVER_PID" 2>/dev/null || true
+
+  # --- ALLOWED-TO-FAIL: deployed tier 2, Cloudflare Workers -----------------------------
+  # push to master + workflow_dispatch only (never fork PRs - needs secrets). The
+  # deploy-check self-skips (exit 0) when its secrets are absent; continue-on-error keeps
+  # a provider outage or missing secret from reddening core CI. Hits the LIVE Pages
+  # fixture (tier2.mjs default FIXTURE_URL), which is correct here on master.
+  cloudflare:
+    name: deployed-tier-2 (Cloudflare)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Deployed tier 2 (ephemeral Workers preview)
+        run: npm run smoke:edge:cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  # --- ALLOWED-TO-FAIL: deployed tier 2, Vercel Edge ------------------------------------
+  # push to master + workflow_dispatch only. Needs `id-token: write` so the assert request
+  # can present a GitHub Actions OIDC token to the Trusted-Sources-protected preview -
+  # WITHOUT it the deploy-check silently skips. continue-on-error, same rationale as CF.
+  vercel:
+    name: deployed-tier-2 (Vercel)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Deployed tier 2 (ephemeral Vercel Edge preview)
+        run: npm run smoke:edge:vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  # --- PENDING: deployed tier 2, Deno Deploy --------------------------------------------
+  # Intentionally omitted: the Deno Deploy job is ticket 16, blocked on Deno signup. Deno's
+  # real native-fetch path is still covered by the required local tier-2 `deno` job above.

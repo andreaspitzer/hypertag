@@ -84,6 +84,23 @@
     "lint": "biome lint",
     "format": "biome format --write",
     "smoke": "node scripts/smoke.js",
+    "smoke:edge:tier1": "node test/edge/run-tier1.mjs node",
+    "smoke:edge:tier1:node": "node test/edge/run-tier1.mjs node",
+    "smoke:edge:tier1:bun": "node test/edge/run-tier1.mjs bun",
+    "smoke:edge:tier1:deno": "node test/edge/run-tier1.mjs deno",
+    "smoke:edge:serve-fixture": "node test/edge/serve-fixture.mjs",
+    "smoke:edge:tier2": "node test/edge/run-tier2.mjs node",
+    "smoke:edge:tier2:node": "node test/edge/run-tier2.mjs node",
+    "smoke:edge:tier2:bun": "node test/edge/run-tier2.mjs bun",
+    "smoke:edge:tier2:deno": "node test/edge/run-tier2.mjs deno",
+    "smoke:edge:handler": "node test/edge/run-handler.mjs node",
+    "smoke:edge:handler:node": "node test/edge/run-handler.mjs node",
+    "smoke:edge:handler:bun": "node test/edge/run-handler.mjs bun",
+    "smoke:edge:cf": "node test/edge/cloudflare/deploy-check.mjs",
+    "smoke:edge:vercel:local": "node test/edge/vercel/run-vercel.mjs node",
+    "smoke:edge:vercel:local:node": "node test/edge/vercel/run-vercel.mjs node",
+    "smoke:edge:vercel:local:bun": "node test/edge/vercel/run-vercel.mjs bun",
+    "smoke:edge:vercel": "node test/edge/vercel/deploy-check.mjs",
     "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"
@@ -96,6 +113,12 @@
     "c8": "^12.0.0",
     "commit-and-tag-version": "^13.1.2",
     "husky": "^9.1.7"
+  },
+  "ava": {
+    "files": [
+      "test/**/*",
+      "!test/edge/**"
+    ]
   },
   "commitlint": {
     "extends": [
