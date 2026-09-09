@@ -10,6 +10,43 @@
 > fix the rule (the code is ground truth). Rules marked **(open)** are not settled yet – see the
 > Open decisions section; do not treat them as binding until resolved.
 
+## Why this positioning – the decision behind the rules
+
+> **This section is the durable record of the positioning *decision*; the numbered rules below are how
+> it is applied.** It exists so a future contributor rewriting the surface has the reasoning, not only
+> the rules, and does not re-open a settled question or let the framing drift. (Recorded per the
+> marketing map's ticket 06; the alternatives considered were a `docs/adr/` entry, a marketing-scoped
+> decision record, and a `CONTEXT.md` note – all set aside because positioning is a marketing decision,
+> not an architecture one, and belongs beside the rules it justifies, in this file. `docs/adr/` stays
+> architecture-only.)
+
+**The decision.** hypertag's on-package marketing surface is positioned **problem-first around the
+edge link-preview / page-metadata job**: it opens on the buyer's situation and leads with the pains
+developers voice about the incumbents, in this order – (1) edge / serverless incompatibility, (2)
+dependency / bundle bloat, (3) memory (a close third). The **metadata extractor is the point** and the
+tag parser is the supporting **floor** (the reason it stays small). The tone is **neutral confidence**:
+sell hypertag's own strengths, reference the alternatives only as neutral benchmark data, never build
+the pitch on a rival's failure.
+
+**Why – it is derived from evidence, not chosen by taste.** This replaced an earlier abstract
+"which identity should hypertag have" framing (discarded with the prior map). Two research inputs
+ground it, and every numbered rule below traces back to them:
+
+- [`research/voc.md`](research/voc.md) – the three axes hypertag genuinely leads on (edge-fit,
+  zero-dependency / small, low retained memory) are *exactly* the three pains developers voice about
+  jsdom, cheerio, and metascraper (evidence E1–E5), and "create a link-preview API endpoint" = "pull
+  og / meta" is a real, verbatim job (E3). The evidence did not redirect the direction; it **settled
+  the ordering** – edge + zero-dep + size loudest, memory close behind, anchored to the meta / OpenGraph
+  job. That ordering is VoC's recommended "lede A".
+- [`research/npm-search-ranking.md`](research/npm-search-ranking.md) – npm search is neutral text-match
+  and the name `hypertag` carries nothing for the extractor terms someone searches, so discoverability
+  rides entirely on the description, keywords, and readme body. The surface must therefore be
+  problem- and keyword-led, not name-led.
+
+**Known limit (does not reopen the decision).** The VoC corpus is single-platform (github-only; HN /
+Reddit / SO egress was blocked). A fuller pass would sharpen the pain-ranking but is out of scope for
+this effort – the direction is settled enough to ship on. See the map's Out-of-scope section.
+
 ## 1. Positioning – what we sell, and to whom
 
 - **P1. Problem-first.** Open on the reader's situation and requirement, not on a feature list. The
