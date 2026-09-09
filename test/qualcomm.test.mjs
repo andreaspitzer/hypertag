@@ -1,6 +1,6 @@
 import {readFileSync} from 'node:fs'
 import test from 'ava'
-import parse from '../hypertag.js'
+import parse from '../parse.js'
 
 const {stripComments} = parse
 const html = readFileSync(new URL('./fixture-qualcomm.html', import.meta.url), 'utf-8')

@@ -15,6 +15,10 @@ npm run bench          # speed, then size, then memory
 npm run bench:speed
 npm run bench:size
 npm run bench:memory
+npm run bench:layers   # hypertag's own eight entry points, the README per-layer size table
+npm run bench:select   # the hypertag/select layer vs a hand-written parse().filter()
+npm run bench:og       # hypertag + select vs metascraper, on OpenGraph extraction
+npm run bench:unified  # the reverse: metascraper's home turf (unified metadata + fallbacks)
 ```
 
 ## The task
@@ -49,6 +53,13 @@ fallback rules, a different and larger job.
 - **size.mjs** the JavaScript you ship to do the task: a minimal entry per
   library is bundled with esbuild (`--bundle --minify`, esm, Node built-ins
   external) and gzipped. This counts the library's own code, not Node.
+- **layer-sizes.mjs** the same esbuild/gzip methodology turned inward on
+  hypertag's own eight entry points (the `hypertag` barrel, the `hypertag/parse`
+  core, and the six opt-in layers). Each row imports that entry the way a
+  consumer uses it and sinks the result, so tree-shaking applies; it emits the
+  exact per-layer table the README's "you import / ships (gzipped)" section
+  quotes, so those figures have one committed source (matches the `meta`=5.0 kB
+  figure in the edge-libs footprint table).
 - **memory.mjs** peak RSS and retained heap, one child process per library so
   nothing else is loaded, run with `--expose-gc` so retained heap is measured
   after a full collection. Memory is the noisiest of the three: treat it as an
@@ -76,7 +87,7 @@ Absolute numbers vary by machine and run. The ratios are the point.
 
 | parser | gzipped | direct deps |
 | --- | ---: | ---: |
-| hypertag | 0.8 kB | 0 |
+| hypertag | 0.7 kB | 0 |
 | html5parser | 2.4 kB | 0 |
 | htmlparser2 | 27.6 kB | 5 |
 | parse5 | 47.2 kB | 2 |
@@ -111,3 +122,63 @@ capable (selectors, traversal, text content, mutation, spec-correct nesting),
 and most parsers here run at the edge too: jsdom cannot (it needs Node's `vm`,
 `fs`, and `http`), and cheerio needs a Node-compat flag for `fs`; the other six
 are pure JS. They just cost more to ship and run. Pick the tool for the job.
+
+## OpenGraph extraction vs metascraper (`bench:og`)
+
+A separate, focused comparison against [metascraper](https://github.com/microlinkhq/metascraper),
+the heavyweight unified-metadata scraper. **These are not the same kind of tool.** metascraper
+returns cooked, unified values after running priority rules across OpenGraph, Twitter Cards,
+JSON-LD and HTML, with URL normalization; hypertag returns raw tags and the benchmark maps
+`og:X → X` itself. metascraper is doing more work by design, so this measures only the narrow
+slice both can do on identical input.
+
+The task, defined in `og-vs-metascraper.mjs`: from a fixed local page
+(`fixture-og.html`, ~46 kB, authored with clean absolute URLs so both resolve identically),
+produce `{title, description, image, url}` from the page's `og:` tags.
+
+- **hypertag:** `select(html, 'meta[property^=og:]')`, then map to the four fields. Zero-dep, sync.
+- **metascraper:** `metascraper([title, description, image, url])({html, url})`. Async.
+
+A correctness gate asserts both return the identical object, field by field, before any number
+is reported. Four dimensions:
+
+| dimension | hypertag + select | metascraper |
+| --- | ---: | ---: |
+| speed (ops/sec) | ~36,000 | ~230 (≈150x slower) |
+| cold start (load + first result) | ~10 ms | ~440 ms |
+| memory (peak RSS) | ~48 MB | ~130 MB |
+| install footprint | 1 package, ~22 kB | 115 packages, ~48 MB |
+
+Absolute numbers vary by machine and metascraper version; the ratios are the point. The
+footprint is the sharpest line: metascraper's 115-package tree is why it does not fit an edge
+bundle, which is exactly where hypertag is meant to run. This script measures the narrow og-only
+slice; for the fuller job (fallbacks, JSON-LD, URL resolution) hypertag now has `hypertag/meta`,
+compared head-to-head in `bench:unified` and `metascraper-accuracy/`. What stays metascraper's
+alone is networked oEmbed and the breadth of its per-field ruleset. If you already have the HTML
+and want the OpenGraph tags out of it, hypertag does that slice for a rounding error of the cost.
+
+### The reverse: metascraper's home turf (`bench:unified`)
+
+To be fair to metascraper, `unified-vs-metascraper.mjs` runs the job it is actually built
+for: resolve unified `{title, description, image, url}` on a **messy** page
+(`fixture-og-fallback.html`) where every field hides somewhere different - title only in the
+`<title>` element text, description only in `<meta name="description">`, a **relative**
+`og:image` that must be resolved to absolute, and the URL only in `<link rel="canonical">`.
+
+hypertag runs this with its shipped metadata layer (`hypertag/meta`): the `content` option
+reads the `<title>` text, `sanitize` decodes the description entity, and `cleanUrl` resolves
+the relative image. The result:
+
+| field | metascraper | hypertag/meta |
+| --- | --- | --- |
+| title | ✅ from `<title>` text | ✅ from `<title>` text (the `content` option) |
+| description | ✅ | ✅ `name=description`, entity-decoded |
+| image | ✅ resolved to absolute | ✅ resolved with `cleanUrl` |
+| url | ✅ from canonical | ✅ from canonical |
+
+hypertag matches **4 of 4**, at ~20x the speed and 115 fewer packages. What was a hard boundary
+in earlier versions - metadata living in element **text** (the `<title>` body, JSON-LD inside a
+`<script>`) - is now reachable through the `content` option and the `hypertag/ld` layer. What
+metascraper's weight still buys is the **breadth** of its per-field ruleset (a much wider set of
+`author`/`date` heuristics, date normalization) and networked fallbacks - rule breadth, not a
+structural wall. See `metascraper-accuracy/RESULTS.md` for the full 7-field, 6-page comparison.

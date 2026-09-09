@@ -1,0 +1,19 @@
+{
+  "name": "edge-libs-bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated benchmark: hypertag/meta vs edge-capable link-preview libraries (open-graph-scraper-lite, linkpeek, openlink) on the shared 'extract metadata from HTML you already have' task. Measures dependency footprint, bundle size, and field agreement.",
+  "scripts": {
+    "start": "node index.mjs",
+    "footprint": "node footprint.mjs",
+    "perf": "node --expose-gc perf.mjs",
+    "correctness": "node correctness.mjs"
+  },
+  "dependencies": {
+    "hypertag": "file:../..",
+    "open-graph-scraper-lite": "^2.1.0",
+    "linkpeek": "^2.1.5",
+    "openlink": "^0.3.0"
+  }
+}

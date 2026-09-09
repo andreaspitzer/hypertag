@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 452" role="img" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif">
+  <title>hypertag layered architecture: a zero-dependency core with opt-in select, sanitize, ld and meta layers, dependencies pointing downward only</title>
+  <defs>
+    <marker id="arw" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L6.5,3 L0,6 Z" fill="#9ca3af"/>
+    </marker>
+    <marker id="arwd" markerWidth="9" markerHeight="9" refX="6.5" refY="3" orient="auto">
+      <path d="M0,0 L6.5,3 L0,6 Z" fill="#b6bcc4"/>
+    </marker>
+  </defs>
+
+  <!-- edges (drawn first, under the boxes) -->
+  <g stroke="#9ca3af" stroke-width="1.6" fill="none">
+    <path d="M390,62 L390,94" stroke="#b6bcc4" stroke-dasharray="5 4" marker-end="url(#arwd)"/>
+    <path d="M300,168 L214,208" marker-end="url(#arw)"/>
+    <path d="M390,168 L390,208" marker-end="url(#arw)"/>
+    <path d="M480,168 L566,208" marker-end="url(#arw)"/>
+    <path d="M214,282 L300,322" marker-end="url(#arw)"/>
+    <path d="M390,282 L390,322" marker-end="url(#arw)"/>
+  </g>
+
+  <!-- product (out of scope) -->
+  <rect x="205" y="16" width="370" height="46" rx="10" fill="none" stroke="#c2c8d0" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text x="390" y="35" text-anchor="middle" font-size="12.5" font-weight="600" fill="#9aa0a6">your product</text>
+  <text x="390" y="51" text-anchor="middle" font-size="10.5" fill="#a8aeb6">fetch · antibot · caching · distribution — lives in your app, not in hypertag</text>
+
+  <!-- meta -->
+  <rect x="110" y="94" width="560" height="74" rx="12" fill="#eef2ff" stroke="#6366f1" stroke-width="2"/>
+  <text x="390" y="120" text-anchor="middle" font-size="15.5" font-weight="700" fill="#3730a3">hypertag/meta</text>
+  <text x="390" y="140" text-anchor="middle" font-size="12.5" fill="#1f2937">metadata · extract · favicon · favicons</text>
+  <text x="390" y="157" text-anchor="middle" font-size="11" fill="#6b7280">the declarative link-preview extractor</text>
+
+  <!-- layer 1 / 2 row -->
+  <rect x="110" y="208" width="188" height="74" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+  <text x="204" y="234" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1e40af">hypertag/select</text>
+  <text x="204" y="253" text-anchor="middle" font-size="11.5" fill="#1f2937">select · pick · presets</text>
+  <text x="204" y="269" text-anchor="middle" font-size="10.5" fill="#6b7280">narrow and read tags</text>
+
+  <rect x="306" y="208" width="168" height="74" rx="12" fill="#f0fdfa" stroke="#14b8a6" stroke-width="2"/>
+  <text x="390" y="234" text-anchor="middle" font-size="14.5" font-weight="700" fill="#0f766e">hypertag/ld</text>
+  <text x="390" y="253" text-anchor="middle" font-size="11.5" fill="#1f2937">ld · pick · asName · asUrl</text>
+  <text x="390" y="269" text-anchor="middle" font-size="10.5" fill="#6b7280">JSON-LD → objects</text>
+
+  <rect x="482" y="208" width="188" height="74" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"/>
+  <text x="576" y="234" text-anchor="middle" font-size="14.5" font-weight="700" fill="#b45309">hypertag/sanitize</text>
+  <text x="576" y="253" text-anchor="middle" font-size="11.5" fill="#1f2937">sanitize · decode · cleanUrl</text>
+  <text x="576" y="269" text-anchor="middle" font-size="10.5" fill="#6b7280">clean values · standalone</text>
+
+  <!-- core -->
+  <rect x="110" y="322" width="560" height="74" rx="12" fill="#ecfdf5" stroke="#10b981" stroke-width="2"/>
+  <text x="390" y="348" text-anchor="middle" font-size="15.5" font-weight="700" fill="#065f46">hypertag · core</text>
+  <text x="390" y="368" text-anchor="middle" font-size="12.5" fill="#1f2937">parse · parseAttrs · stripComments · extend</text>
+  <text x="390" y="385" text-anchor="middle" font-size="11" fill="#6b7280">one string scan → flat list of tags · zero dependencies</text>
+
+  <!-- caption -->
+  <text x="390" y="428" text-anchor="middle" font-size="11.5" fill="#9aa0a6">each box is a separate import · dependencies point downward only · nothing lower reaches up</text>
+</svg>

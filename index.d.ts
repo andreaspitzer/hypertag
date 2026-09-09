@@ -1,49 +1,10 @@
-// Type definitions for hypertag
-// The fastest HTML tag and attributes parser.
-// Published as CommonJS: `const parse = require('hypertag')`.
-
-export = parse
-
-/**
- * Parse `source` and return an attribute map for every occurrence of the given
- * tag(s). Pass `'*'` to match every tag.
- */
-declare function parse(
-  source: string,
-  tags: string | string[],
-  options?: parse.ParseOptions
-): parse.Tag[]
-
-declare namespace parse {
-  interface ParseOptions {
-    /**
-     * Key under which the matched tag name is stored on each result object.
-     * @default '<'
-     */
-    tagKey?: string
-  }
-
-  /**
-   * One matched tag: its attributes plus the tag name under `tagKey`.
-   * An attribute value is its string value, or `true` when valueless.
-   */
-  type Tag = Record<string, string | boolean>
-
-  /** Alias of the default export (`require('hypertag').parse`). */
-  function parse(source: string, tags: string | string[], options?: ParseOptions): Tag[]
-
-  /**
-   * Parse a single HTML tag's text into an attribute map.
-   * Returns `undefined` when the input is not a tag.
-   */
-  function parseAttrs(htmlTagText: string, tagKey?: string): Tag | undefined
-
-  /** Remove HTML comments (`<!-- ... -->`) from a string. */
-  function stripComments(html: string): string
-
-  /** Create a parser pre-bound to `tags` and `options`. */
-  function extend(
-    tags: string | string[],
-    options?: ParseOptions
-  ): (source: string) => Tag[]
-}
+// Type definitions for the batteries-included barrel (`import ... from 'hypertag'`).
+// A curated, named-only surface: exactly the exports of index.js, each typed by re-exporting
+// the underlying declaration from its per-entry `.d.ts`. No default export.
+export {parse, parseAttrs, stripComments, extend} from './parse.js'
+export {default as select} from './select.js'
+export {sanitize, decode, cleanUrl} from './sanitize.js'
+export {default as ld, asName, asUrl} from './ld.js'
+export {metadata, extract, rules, favicon, favicons} from './meta.js'
+export {fromUrl, oembed} from './fetch.js'
+export {oembedEndpoint, providers} from './oembed.js'

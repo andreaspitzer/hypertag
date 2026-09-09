@@ -1,5 +1,5 @@
 import test from 'ava'
-import parseTags from '../hypertag.js'
+import parseTags from '../parse.js'
 
 const {stripComments, parseAttrs} = parseTags
 
@@ -15,11 +15,11 @@ test('full HTML', t => {
   `, 'hello')
   t.deepEqual(result, [
     {
-      '<'  : 'hello',
+      $tag: 'hello',
       world: 'yes'
     },
     {
-      '<': 'hello'
+      $tag: 'hello'
     }
   ])
 })
@@ -42,7 +42,7 @@ test('extend', t => {
 
 test('string and array arguments', t => {
   const input = '<hello who="world">'
-  const expected = [{'<': 'hello', who: 'world'}]
+  const expected = [{$tag: 'hello', who: 'world'}]
 
   t.deepEqual(parseTags(input, 'hello'), expected)
   t.deepEqual(parseTags(input, ['hello']), expected)
@@ -94,7 +94,7 @@ test('getTags with dash in tag', t => {
   t.deepEqual(
     parseTags(`<${randomTag}>`, randomTag),
     [{
-      '<': randomTag
+      $tag: randomTag
     }])
 })
 
@@ -116,12 +116,41 @@ test('match all tags', t => {
     .join('\n')
     + '<title>'
   const expected = [
-    ...generatedTags.map(tagname => ({'<': tagname})),
-    {'<': 'title'}
+    ...generatedTags.map(tagname => ({$tag: tagname})),
+    {$tag: 'title'}
   ]
 
   const result = parseTags(html, '*')
   t.deepEqual(result, expected)
+})
+
+test('a cache memoizes identical parses; a different tag set gets its own entry', t => {
+  const html = '<meta name="a" content="1"><link rel="x">'
+  const cache = new Map()
+  const first = parseTags(html, 'meta', undefined, cache)
+  const second = parseTags(html, 'meta', undefined, cache)
+  t.is(first, second) // cache hit → same array reference
+  t.not(parseTags(html, 'link', undefined, cache), first) // different tags → own entry
+  // no cache → a fresh array each call
+  t.not(parseTags(html, 'meta'), parseTags(html, 'meta'))
+})
+
+test('a cache keys content mode separately and matches the uncached result', t => {
+  const html = '<title>Hi</title>'
+  const cache = new Map()
+  const uncached = parseTags(html, 'title', {content: true})
+  const a = parseTags(html, 'title', {content: true}, cache)
+  const b = parseTags(html, 'title', {content: true}, cache)
+  t.is(a, b)
+  t.deepEqual(a, uncached)
+  t.not(parseTags(html, 'title', undefined, cache), a) // non-content mode is a separate entry
+})
+
+test('separate caches never share entries', t => {
+  const html = '<meta name="a" content="1">'
+  const cacheA = new Map()
+  const cacheB = new Map()
+  t.not(parseTags(html, 'meta', undefined, cacheA), parseTags(html, 'meta', undefined, cacheB))
 })
 
 function randomString() {

@@ -1,49 +1,79 @@
 {
   "name": "hypertag",
   "version": "0.1.0",
-  "description": "Tiny zero-dependency HTML parser: read tag attributes from an HTML string with a getElementsByTagName that needs no DOM. Runs on Node, Deno, Bun and the edge.",
+  "description": "The fastest, edge-ready way to pull link preview tags from HTML into one card: Open Graph, Twitter cards, JSON-LD, meta tags and favicon – ~5 kB, no DOM, zero dependencies, lowest-memory. Runs on Node, Deno, Bun and Cloudflare Workers.",
   "keywords": [
-    "html-parser",
-    "parse-html",
-    "html",
-    "parser",
-    "meta-tags",
-    "meta",
-    "open-graph",
-    "og",
     "opengraph",
-    "scraper",
-    "attributes",
-    "favicon",
+    "open-graph",
+    "link-preview",
+    "unfurl",
+    "og-tags",
+    "meta-tags",
+    "html-metadata",
+    "html-parser",
     "cloudflare-workers",
-    "getElementsByTagName"
+    "edge",
+    "favicon"
   ],
   "author": "Andreas Pitzer <hopster@gmail.com> (https://github.com/andreaspitzer)",
   "repository": "andreaspitzer/hypertag",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "types": "./index.d.ts",
-  "main": "./hypertag.js",
-  "module": "./hypertag.mjs",
+  "main": "./index.js",
   "exports": {
     ".": {
-      "import": {
-        "types": "./index.d.mts",
-        "default": "./hypertag.mjs"
-      },
-      "require": {
-        "types": "./index.d.ts",
-        "default": "./hypertag.js"
-      }
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./parse": {
+      "types": "./parse.d.ts",
+      "default": "./parse.js"
+    },
+    "./select": {
+      "types": "./select.d.ts",
+      "default": "./select.js"
+    },
+    "./sanitize": {
+      "types": "./sanitize.d.ts",
+      "default": "./sanitize.js"
+    },
+    "./ld": {
+      "types": "./ld.d.ts",
+      "default": "./ld.js"
+    },
+    "./meta": {
+      "types": "./meta.d.ts",
+      "default": "./meta.js"
+    },
+    "./fetch": {
+      "types": "./fetch.d.ts",
+      "default": "./fetch.js"
+    },
+    "./oembed": {
+      "types": "./oembed.d.ts",
+      "default": "./oembed.js"
     },
     "./package.json": "./package.json"
   },
   "sideEffects": false,
   "files": [
-    "hypertag.js",
-    "hypertag.mjs",
+    "index.js",
     "index.d.ts",
-    "index.d.mts"
+    "parse.js",
+    "parse.d.ts",
+    "select.js",
+    "select.d.ts",
+    "sanitize.js",
+    "sanitize.d.ts",
+    "ld.js",
+    "ld.d.ts",
+    "meta.js",
+    "meta.d.ts",
+    "fetch.js",
+    "fetch.d.ts",
+    "oembed.js",
+    "oembed.d.ts"
   ],
   "engines": {
     "node": ">=18"
@@ -53,7 +83,7 @@
     "pretest": "npm run lint",
     "lint": "biome lint",
     "format": "biome format --write",
-    "smoke": "node scripts/smoke.cjs && node scripts/smoke.mjs",
+    "smoke": "node scripts/smoke.js",
     "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"

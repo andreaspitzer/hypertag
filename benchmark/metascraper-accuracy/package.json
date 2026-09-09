@@ -1,0 +1,24 @@
+{
+  "name": "metascraper-accuracy-bench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Adapted from metascraper's own accuracy benchmark (github.com/microlinkhq/metascraper/tree/master/benchmark): fetch real pages, run each scraper, normalize to a common shape, compare. Adds hypertag; refreshed URLs; requires network.",
+  "scripts": {
+    "start": "node index.mjs",
+    "offline": "node index-offline.mjs",
+    "perf": "node perf.mjs"
+  },
+  "dependencies": {
+    "hypertag": "file:../..",
+    "metascraper": "^5.46.11",
+    "metascraper-author": "^5.46.11",
+    "metascraper-date": "^5.46.11",
+    "metascraper-description": "^5.46.11",
+    "metascraper-image": "^5.46.11",
+    "metascraper-publisher": "^5.46.11",
+    "metascraper-title": "^5.46.11",
+    "metascraper-url": "^5.46.11",
+    "open-graph-scraper": "^6.8.2"
+  }
+}
