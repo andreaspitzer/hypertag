@@ -28,7 +28,7 @@ Done (commit `7c2bb69`). `.github/workflows/edge-e2e.yml` beside `ci.yml` (untou
   `serve-fixture.mjs` (port 8787) and sets `EDGE_E2E_FIXTURE_URL` to localhost, so the required matrix
   is green **independent of live Pages** (the fixture's `og:image`/`og:url` are absolute, so `EXPECTED`
   still holds). `tier2.mjs`'s default was left unchanged.
-- **Deployed jobs** (push to master + `workflow_dispatch` only, `if:`-gated off PRs,
+- **Deployed jobs** (push to **develop** + `workflow_dispatch` only, `if:`-gated off PRs,
   `continue-on-error: true`): `cloudflare` (`smoke:edge:cf`, `CLOUDFLARE_API_TOKEN` +
   `CLOUDFLARE_ACCOUNT_ID`) and `vercel` (`smoke:edge:vercel`, `VERCEL_TOKEN`/`ORG`/`PROJECT` + job
   `permissions: id-token: write`). Deno Deploy job omitted (ticket 16 blocked; YAML comment marks it).
@@ -41,8 +41,12 @@ biome lint clean. Real CI proves: the Deno jobs, the live CF/Vercel deploys, and
 persisting across steps on GitHub runners.
 
 **Maintainer follow-ups:** (1) **Pages Source = "GitHub Actions"** so the fixture is live for the
-deployed jobs on master; (2) mark the six **`tier-1-and-local-tier-2 (...)` matrix jobs** as required
-status checks on `master` – NOT the allowed-to-fail deploy jobs.
+deployed jobs on develop; (2) mark the six **`tier-1-and-local-tier-2 (...)` matrix jobs** as required
+status checks on `develop` – NOT the allowed-to-fail deploy jobs.
+
+(The deployed CF/Vercel jobs and the Pages deploy trigger on **`develop`** – the branch the stack
+merges into – not `master`; switched from the initial "default branch" wording so the deployed tier
+activates on the integration merge rather than a `develop`→`master` promotion.)
 
 ### Post-push CI fixes (green as of commit `870f327`)
 

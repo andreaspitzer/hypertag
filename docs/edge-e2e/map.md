@@ -112,7 +112,7 @@ later.
   Commit `00120ed`.
 - [Build: edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) – required runtime matrix (Node
   18/20/22/24, Bun, Deno) running tier-1 + local tier-2 (fixture served locally via `serve-fixture.mjs`,
-  so green off-Pages) on push/PR; CF + Vercel deploy jobs allowed-to-fail on master/dispatch (Vercel
+  so green off-Pages) on push/PR; CF + Vercel deploy jobs allowed-to-fail on develop/dispatch (Vercel
   with `id-token: write`). actionlint clean, matrix green locally. Commit `7c2bb69`.
 
 **Frontier now: the build is complete.** Tickets 11–15 are built, locally validated, and pushed – the
@@ -132,9 +132,9 @@ Remaining:
 
 **Reaching "green in CI" (the destination) now rests on CI runs + two maintainer settings:**
 (1) repo **Settings → Pages → Source = "GitHub Actions"** so the fixture goes live (required for the
-deployed jobs on master); (2) mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs as required
-status checks on `master` (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel jobs first run
-on push to `master` / `workflow_dispatch`, never on a PR.
+deployed jobs on develop); (2) mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs as required
+status checks on `develop` (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel jobs first run
+on push to `develop` / `workflow_dispatch`, never on a PR (the stack merges into `develop`).
 
 ## Not yet specified
 
