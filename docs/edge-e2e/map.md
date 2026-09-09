@@ -130,11 +130,32 @@ Remaining:
   signup (`403 SIGNUP_UNAVAILABLE`); Deno the runtime is covered by the local tier-2 matrix meanwhile.
 - Downstream fog: README / claim reconciliation, once CI results reveal reality (see Not yet specified).
 
-**Reaching "green in CI" (the destination) now rests on CI runs + two maintainer settings:**
-(1) repo **Settings → Pages → Source = "GitHub Actions"** so the fixture goes live (required for the
-deployed jobs on develop); (2) mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs as required
-status checks on `develop` (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel jobs first run
-on push to `develop` / `workflow_dispatch`, never on a PR (the stack merges into `develop`).
+**Reaching "green in CI" (the destination) now rests on CI runs + the maintainer settings below.**
+
+**Pages published from `master` (PR #13, merged).** `pages.yml` + the fixture + the root `vercel.json`
+(`git.deploymentEnabled:false`) were carried to `master` on their own – a minimal PR, NOT the full stack
+– because GitHub's Actions UI, the `workflow_dispatch` button, and the `github-pages` environment's
+default deployment-branch rule are all keyed to the **default branch (`master`)**. So `pages.yml` runs
+`master` + `develop`; the deploy from `master` needs no environment-rule change; and `master` has **no
+`CNAME`**, so the fixture serves at `https://andreaspitzer.github.io/hypertag/`. After the merge the
+maintainer must still: **Settings → Pages → Source = "GitHub Actions"** (dismiss the suggested starter
+workflow – `pages.yml` *is* the Pages workflow), then **Actions → Pages → Run workflow** on `master` (or
+push a fixture change) to publish the first deploy. That turns the **Cloudflare** deployed job green on
+the next `develop` run (its `wrangler deploy` fix is proven; today it fails only on the fixture 404).
+
+**Required status checks:** mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs (Node 18/20/22/24,
+Bun, Deno) as required checks on **`develop`** (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel
+jobs first run on push to `develop` / `workflow_dispatch`, never on a PR (the stack merges into `develop`).
+
+**Two landmines for the eventual `develop` → `master` promotion of the full stack:**
+- **`CNAME`.** `develop` still carries `CNAME` → `hypertag.js.org`; `master` deleted it. The promotion
+  merge must **keep the deletion** (do not reintroduce `CNAME`), or Pages flips to the custom domain and
+  breaks the `andreaspitzer.github.io/hypertag/` fixture URL the whole tier-2 suite is pinned to.
+- **Required checks belong on the branch that produces them.** The six `tier-1-and-local-tier-2 (...)`
+  checks come from `edge-e2e.yml`, which lives only on `develop`, and they also need the library itself
+  to pass (they pack + import it). So do **not** require them on `master` until the full stack is on
+  `master` – otherwise every `master` PR deadlocks "Expected — waiting for status" (PR #13 hit exactly
+  this). Add them to `master`'s required set only *after* the promotion lands.
 
 ## Not yet specified
 
