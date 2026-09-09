@@ -88,6 +88,7 @@
     "smoke:edge:tier1:node": "node test/edge/run-tier1.mjs node",
     "smoke:edge:tier1:bun": "node test/edge/run-tier1.mjs bun",
     "smoke:edge:tier1:deno": "node test/edge/run-tier1.mjs deno",
+    "smoke:edge:serve-fixture": "node test/edge/serve-fixture.mjs",
     "smoke:edge:tier2": "node test/edge/run-tier2.mjs node",
     "smoke:edge:tier2:node": "node test/edge/run-tier2.mjs node",
     "smoke:edge:tier2:bun": "node test/edge/run-tier2.mjs bun",
