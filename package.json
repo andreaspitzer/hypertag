@@ -96,6 +96,10 @@
     "smoke:edge:handler:node": "node test/edge/run-handler.mjs node",
     "smoke:edge:handler:bun": "node test/edge/run-handler.mjs bun",
     "smoke:edge:cf": "node test/edge/cloudflare/deploy-check.mjs",
+    "smoke:edge:vercel:local": "node test/edge/vercel/run-vercel.mjs node",
+    "smoke:edge:vercel:local:node": "node test/edge/vercel/run-vercel.mjs node",
+    "smoke:edge:vercel:local:bun": "node test/edge/vercel/run-vercel.mjs bun",
+    "smoke:edge:vercel": "node test/edge/vercel/deploy-check.mjs",
     "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"
