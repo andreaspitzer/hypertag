@@ -89,10 +89,16 @@ later.
 
 **Frontier now:** all contracts are settled. The one open item is the **HITL** ticket
 [Provision accounts + CI secrets](issues/09-provision-accounts-secrets.md) – its copy-pasteable
-checklist is ready, and the maintainer creates the Cloudflare / Deno Deploy / Vercel accounts +
-GitHub Pages and records the secret names. Everything buildable without secrets (the tier-1 harness +
+checklist is ready, and the maintainer creates the Cloudflare / Vercel accounts + GitHub Pages and
+records the secret names. Everything buildable without secrets (the tier-1 harness +
 Node / Bun / Deno runners, the local tier-2, the shared edge handler, and the fixture) can proceed in
 parallel; the three deployed tier-2 jobs and their CI wiring wait on 09.
+
+> **Deno Deploy signup blocked (2026-09-09).** Account creation returns `403 SIGNUP_UNAVAILABLE`.
+> Maintainer decision: **proceed without it, defer the deployed Deno Deploy tier-2 job** (Deno the
+> runtime stays covered locally in CI; that job is already allowed-to-fail per ticket 10). Ticket 09
+> resolves on Cloudflare + Vercel + Pages; the deployed Deno Deploy endpoint/job is a small follow-up
+> for when EA signup reopens. Detail in ticket 09's blocked note.
 
 ## Not yet specified
 
@@ -103,7 +109,8 @@ parallel; the three deployed tier-2 jobs and their CI wiring wait on 09.
   One patch, likely several tickets (one per runtime, or one shared harness + per-runtime runners).
 - **The tier-2 endpoint app(s) + live-URL assertions.** Graduates from the tier-2 contract (02),
   the deployment model (08), and provisioning (09): the small `fromUrl` handler per provider, the
-  target it hits, and how the CI job asserts the returned card.
+  target it hits, and how the CI job asserts the returned card. *The Deno Deploy deployed endpoint +
+  job is deferred pending Deno EA signup (see the frontier note); Cloudflare + Vercel proceed now.*
 - **The GitHub Actions wiring itself.** The concrete jobs/matrix/secrets that run both tiers across
   the runtimes, graduating from the CI-structure decision (10) and provisioning (09).
 - **README / claim reconciliation.** If a runtime fails or needs a caveat (a real ESM/bundling gap,

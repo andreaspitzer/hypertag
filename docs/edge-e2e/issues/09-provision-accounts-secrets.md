@@ -61,17 +61,27 @@ A **free plan is enough**; ephemeral deploy → curl → delete sits well inside
 
 ### Deno Deploy (persistent app – Deno Deploy EA at console.deno.com, *not* Classic/`deployctl`)
 
+> **⚠ BLOCKED / DEFERRED (2026-09-09).** Deno Deploy account creation currently returns
+> **`403 SIGNUP_UNAVAILABLE`** ("Account creation is currently unavailable"). Decision (maintainer):
+> **proceed without it for now.** Deno-the-runtime stays fully covered in CI with no account (tier 1 +
+> local native-`fetch` tier 2 via `setup-deno`, per tickets 05/07/10); only the **deployed** Deno
+> Deploy tier-2 job is deferred, and it is already allowed-to-fail / non-gating (ticket 10). Retry
+> signup later (it's an EA gate, plausibly transient) or email deploy@deno.com; wire this job when
+> access opens. This does **not** block resolving ticket 09 for the other providers.
+
+When signup reopens (steps kept ready):
+
 Deploy Classic shut down 20 Jul 2026; `deployctl` is retired in favour of the built-in `deno deploy`
 subcommand. Free tier covers CI; there is no free per-run auto-teardown, so the app is persistent
 (ticket 08).
 
-- [ ] Create an account **and an organization** at console.deno.com, then one app. The app URL is
-      `<app-name>.deno.dev`.
-- [ ] New Access Token at **console.deno.com/account/access-tokens → New Access Token** → copy
-      immediately (shown once). → secret **`DENO_DEPLOY_TOKEN`**
-- [ ] Tell me **three** values the CI wiring needs (ticket 10): the **org name** (it's in the console
-      URL, `console.deno.com/<ORG-NAME>`), the **app name**, and the **region** (`us`, `eu`, or
-      `global`).
+- [ ] *(deferred)* Create an account **and an organization** at console.deno.com, then one app. The
+      app URL is `<app-name>.deno.dev`.
+- [ ] *(deferred)* New Access Token at **console.deno.com/account/access-tokens → New Access Token** →
+      copy immediately (shown once). → secret **`DENO_DEPLOY_TOKEN`**
+- [ ] *(deferred)* Then tell me the **org name** (from the console URL, `console.deno.com/<ORG-NAME>`),
+      the **app name**, and the **region** (`us`, `eu`, or `global`) – the CI wiring needs all three
+      (ticket 10).
 
 ### Vercel Edge (ephemeral preview; Hobby is fine)
 
@@ -98,12 +108,14 @@ subcommand. Free tier covers CI; there is no free per-run auto-teardown, so the 
 Tell me – **names only, never values**:
 
 1. Which secrets now exist: **`CLOUDFLARE_API_TOKEN`**, **`CLOUDFLARE_ACCOUNT_ID`**,
-   **`DENO_DEPLOY_TOKEN`**, **`VERCEL_TOKEN`**, **`VERCEL_ORG_ID`**, **`VERCEL_PROJECT_ID`**, and
-   **either** `VERCEL_AUTOMATION_BYPASS_SECRET` **or** "Trusted Sources configured".
-2. The Deno **org name + app name + region**.
-3. The **GitHub Pages URL** the fixture is served from.
+   **`VERCEL_TOKEN`**, **`VERCEL_ORG_ID`**, **`VERCEL_PROJECT_ID`**, and **either**
+   `VERCEL_AUTOMATION_BYPASS_SECRET` **or** "Trusted Sources configured".
+   (**`DENO_DEPLOY_TOKEN`** is deferred – see the blocked note above.)
+2. The **GitHub Pages URL** the fixture is served from.
 
-Then this ticket's **Answer** records those (names + non-secret facts) and it's marked resolved.
+Once these are in, this ticket's **Answer** records them (names + non-secret facts) and it's marked
+resolved – with Deno Deploy explicitly logged as deferred (blocked on signup), to be picked up as a
+small follow-up when access opens.
 
 ## Verification notes (Sep 2026)
 
