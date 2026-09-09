@@ -89,6 +89,10 @@ the whole positioning (P1 problem-first, P3 extractor-is-the-point). Concept B i
 option if a wordmark-hero look is preferred. The human picks one (the HITL half of this prototype
 ticket); no ticket blocks on the choice.
 
+**Chosen: Concept A "The card"** (human decision). The human exports
+[`social-card-A-the-card.svg`](../assets/social-card-A-the-card.svg) to a 1280×640 PNG and uploads it
+under Settings → Social preview. Concept B is kept in the repo as an unused alternate.
+
 ### Adjacent, optional (not in scope, flagged for the human)
 
 The repo `homepage` field is empty. Pointing it at the npm page
