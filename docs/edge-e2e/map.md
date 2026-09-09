@@ -91,12 +91,16 @@ later.
   `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` set, Vercel preview access via **Trusted Sources (OIDC)** (no
   bypass secret), fixture host **https://andreaspitzer.github.io/hypertag/**. **Deno Deploy deferred**
   (`403 SIGNUP_UNAVAILABLE`) → its deployed job is ticket 16.
+- [Build: tier-1 harness + runners](issues/11-tier1-harness-runners.md) – `test/edge/` harness
+  importing the package subpaths from the packed tarball; runtime-agnostic throwing assert (no
+  `node:assert`), pack-install driver, `smoke:edge:tier1[:node|:bun|:deno]`. Node + Bun green locally;
+  Deno wired, CI confirms. Commit `f85ac49`.
 
 **Frontier now: all decisions are settled and provisioning is done – the map has crossed into the
 build.** The build fog has graduated into execution tickets:
 
-- Takeable now (unblocked, no secrets): [tier-1 harness + runners](issues/11-tier1-harness-runners.md),
-  [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md).
+- ✅ Done: [tier-1 harness + runners](issues/11-tier1-harness-runners.md) (Node + Bun green; Deno via CI).
+- Takeable now (unblocked, no secrets): [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md).
 - Takeable now (secrets ready): [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md),
   then [Vercel deployed](issues/14-vercel-edge-deploy.md) (blocked by 13 for the shared handler).
 - Waiting: [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) (blocked by 11–14).
