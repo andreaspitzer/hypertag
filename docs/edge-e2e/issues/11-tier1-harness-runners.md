@@ -1,7 +1,7 @@
 # Build: portable tier-1 harness + per-runtime runners (Node / Bun / Deno)
 
 Type: task
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question

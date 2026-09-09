@@ -1,7 +1,7 @@
 # Build: Vercel Edge deployed tier-2 job
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 13
 
 ## Question

@@ -1,7 +1,7 @@
 # Build: local tier-2 (native `fromUrl`) + GitHub Pages fixture
 
 Type: task
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question

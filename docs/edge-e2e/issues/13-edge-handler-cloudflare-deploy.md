@@ -1,7 +1,7 @@
 # Build: shared edge handler + Cloudflare Workers deployed tier-2 job
 
 Type: task
-Status: open
+Status: claimed
 Blocked by:
 
 ## Question

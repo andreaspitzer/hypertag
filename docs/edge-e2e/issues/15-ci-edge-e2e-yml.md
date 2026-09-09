@@ -1,7 +1,7 @@
 # Build: edge-e2e.yml GitHub Actions wiring
 
 Type: task
-Status: open
+Status: claimed
 Blocked by: 11, 12, 13, 14
 
 ## Question
