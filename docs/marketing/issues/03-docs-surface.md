@@ -1,7 +1,7 @@
 # Docs surface for the VoC framing
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -32,3 +32,53 @@ numbers drift (C1 provenance gap). Two figures round the wrong way and one was s
   script) that emits this exact eight-row table with one methodology, then regenerate all eight README
   rows from its output in a single pass – so C1 holds for the size table the way it already does for
   the speed/memory tables. Resolve F2 by that regeneration, not by hand-patching individual cells.
+
+## Answer
+
+Decided with the human (2026-09-09): **correctness fixes + an extractor-forward reorder** of
+`docs/api.md`; **adopt the committed size benchmark as-is with no README cell change**.
+
+### Docs-structure decision
+
+`docs/api.md` was realigned to the extractor-forward story the README tells, and its ADR-0002
+staleness fixed. `CONTEXT.md` needs **no change** – it is already ADR-0002-aware (bare `hypertag`
+= the batteries-included barrel, core = `hypertag/parse`) and its layer table is accurate.
+
+### `docs/api.md` corrections applied
+
+- **A1 (stale, fixed).** The section headed `## hypertag` presented `parse()` as "The core." Post
+  ADR-0002 the core is `hypertag/parse` and `hypertag` is the barrel. The core section is now
+  `## hypertag/parse`.
+- **A2 (missing, added).** The batteries-included `hypertag` barrel – the *primary* entry point –
+  was undocumented. Added a `## hypertag` section: its curated named exports, **no default export**,
+  and the rule that colliding helpers (`pick`, and the `meta`/`ld` source-helpers) stay on their
+  subpaths.
+- **A3 (stale, fixed).** The intro's "Nothing fetches" predated the `fetch` layer. Rescoped to
+  "every layer up to and including `meta` is HTML-in, string-only; `hypertag/fetch` is the one
+  exception," matching `CONTEXT.md`.
+- **Extractor-forward reorder.** Sections now run barrel → `meta` (the extractor) → `fetch` →
+  `oembed` → `parse` (the floor) → `select` → `sanitize` → `ld`, mirroring the README instead of
+  the old bottom-up layer order.
+- **Bonus number fix.** `hypertag/oembed` was described as "~1.7 kB" in `api.md`; the measured,
+  README-consistent figure is **~1.4 kB**. Corrected.
+- **Verified accurate, left unchanged:** the 21-field card set, the selector operator table, and
+  the `meta`/`fetch`/`oembed`/`select`/`sanitize`/`ld` signatures.
+
+### F3 (size-table provenance) + F2 (drifted cells)
+
+Added a committed **`benchmark/layer-sizes.mjs`** (script `bench:layers`) that emits the exact
+eight-row per-layer table with **one methodology** – esbuild `--bundle --minify`, esm, node
+built-ins external, tree-shaking on – matching `edge-libs/footprint.mjs` so the numbers agree
+across the README (C4). Documented in `benchmark/README.md`.
+
+**F2 re-examined and closed.** F2 expected `hypertag`→6.5 and `hypertag/select`→2.0. Those come
+from a *whole-module* measure (force-keeping every export), which also pushes `hypertag/meta` to
+5.1 kB – contradicting the edge table's `meta`=5.0 one screen away, i.e. reintroducing the F1
+defect. Under the consistent representative-use methodology the committed script reproduces **all
+eight current README cells exactly** (`hypertag` 6717 B → 6.6; `select` 1991 B → 1.9; `meta`
+5073 B → 5.0; `parse` 0.7, `ld` 0.9, `sanitize` 1.4, `oembed` 1.4, `fetch` 5.1). So F3's real gap
+was **provenance, not wrong numbers**: the README table is regenerated from the script and needs no
+cell change. F2's 6.5/2.0 premise is dropped.
+
+Artifacts: `docs/api.md` (rewritten), `benchmark/layer-sizes.mjs` (new), `benchmark/package.json`
++ `benchmark/README.md` (script wired + documented). README size table unchanged (already correct).

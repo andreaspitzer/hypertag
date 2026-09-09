@@ -50,16 +50,14 @@ runs `npm publish` and pushes.
 - [Write the README from VoC + SEO](issues/01-readme-from-voc.md) — README.md written from scratch to the VoC spine: problem-first hero (VoC lede A), the link-preview endpoint as the lead example, the jsdom/cheerio/HTMLRewriter contrast with fresh measured numbers, the tag parser as the floor, and the metascraper slice. Keyword-woven for npm/SEO; `fromUrl`/`oembed` reconciled in. Uncommitted; rendered preview published.
 - [Settle competitor treatment + benchmark completeness](issues/05-competitor-treatment-benchmark.md) — O1: "vs metascraper" prose cut (names only in neutral data), HTMLRewriter kept as the one documented exception; O2: hero size claim is "edge-ready" + factual ~5 kB, no size superlative; O3: an edge link-preview benchmark table (openlink/linkpeek/ogs-lite) added above the parser table. Rules folded into principles.md (X1/C2). Landed together with the ADR-0002 packaging change, so README numbers are the fresh ESM-only figures.
 - [package.json description + ordered keywords](issues/02-npm-description-keywords.md) — new `description` echoes the finalized hero (drops the old "smallest" superlative, per C2); keyword list trimmed 17→11 (filler dropped, both-spelling coverage kept via canonical hyphenated forms that token-split, plus `Open Graph` spaced in description/README prose). Paired README coverage pass added the missing spaced/long-tail terms (`Open Graph`, `meta tags`, `og tags`) as natural prose without adding length – ranking rewards term coverage, not word count (BM25 length-normalization; readme already past the thin-content gate). The edge benchmark table also gained an `extract speed` column (hypertag 1x, openlink 2.8x slower, ogs-lite ~80x), reproduced via `npm run bench:edge`.
+- [Docs surface for the VoC framing](issues/03-docs-surface.md) — `docs/api.md` realigned extractor-forward (barrel → `meta` → `fetch` → `oembed` → `parse` → `select` → `sanitize` → `ld`) and de-staled for ADR-0002: the core section renamed to `hypertag/parse`, the missing `hypertag` barrel section added (curated named exports, no default), the "nothing fetches" intro rescoped, and `oembed` 1.7→1.4 kB fixed. `CONTEXT.md` needs no change (already ADR-0002-aware). F3 closed: a committed `benchmark/layer-sizes.mjs` (`bench:layers`) now sources the README's eight-row per-layer size table under one methodology (tree-shaken, matching the edge table's `meta`=5.0), and reproduces all eight current cells exactly – so F2's 6.5/2.0 premise (a whole-module measure that would break C4) is dropped and no README cell changes.
 
 ## Not yet specified
 
 <!-- in-scope fog; graduates into tickets as the frontier advances -->
 
-- **Docs surface for the VoC framing.** Once the README lands (ticket 01), decide whether
-  `docs/api.md` / `CONTEXT.md` need aligning to the extractor-forward story, and audit `docs/api.md`
-  against the seven shipped layers. Graduates after 01.
-- **Recording the positioning durably.** Whether the VoC-derived positioning should be written as an
-  ADR or `CONTEXT.md` note so it doesn't drift. Small; revisit once the surface is drafted.
+_(none open – both prior patches have graduated: "Docs surface for the VoC framing" into ticket 03
+(resolved), and "Recording the positioning durably" into ticket 06 (the surface is now drafted).)_
 
 ## Out of scope
 

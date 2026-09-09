@@ -12,6 +12,7 @@
     "bench:edge": "cd edge-libs && npm install && npm run footprint && npm run perf && npm run correctness && npm start",
     "bench:speed": "node speed.mjs",
     "bench:size": "node size.mjs",
+    "bench:layers": "node layer-sizes.mjs",
     "bench:memory": "node memory.mjs"
   },
   "devDependencies": {

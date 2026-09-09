@@ -1,11 +1,83 @@
 # hypertag – API reference
 
-Every function takes an HTML (or, for `hypertag/ld`, a JSON-LD-bearing HTML) **string you already have**. Nothing fetches. For the guided tour, examples, and benchmarks, see the [README](../README.md). TypeScript types ship in the package for all of these.
+The primary entry is the batteries-included **`hypertag`** barrel (ADR-0002): `import {fromUrl, metadata} from 'hypertag'` and you have the extractor. Reach for a single layer below (`hypertag/parse`, `hypertag/meta`, …) when you want to ship only that layer's footprint. Every layer up to and including `meta` is **HTML-in, string-only** – you hand it markup you already have and nothing reaches the network; `hypertag/fetch` is the single, deliberate exception. For the guided tour, examples, and benchmarks, see the [README](../README.md). TypeScript types ship in the package for all of these.
 
 ## `hypertag`
 
+The batteries-included barrel and the entry most consumers use – a curated, **named-only** re-export of the whole public API, so the common case is one import:
+
+```js
+import {fromUrl, metadata, parse, select} from 'hypertag'
+```
+
+**Exports:** `parse`, `parseAttrs`, `stripComments`, `extend` (core); `select`; `sanitize`, `decode`, `cleanUrl`; `ld`, `asName`, `asUrl`; `metadata`, `extract`, `rules`, `favicon`, `favicons`; `fromUrl`, `oembed`; `oembedEndpoint`, `providers`.
+
+There is **no default export**. Names that would collide across layers stay on their own subpaths rather than the barrel: the `meta` source-helpers (`meta`, `link`, `content`, `attr`, `ld`, `ldName`, `ldUrl`) come only from `hypertag/meta`, and the `pick` / `.compile` helpers only from `hypertag/select` and `hypertag/ld` (so the barrel's `ld` is unambiguously the JSON-LD-layer function). ESM-only with `sideEffects:false`, so tree-shaking trims what you do not use; a size-minimizing consumer imports the specific layer instead (`hypertag/parse` is ~0.7 kB against the barrel's ~6.6 kB).
+
+## `hypertag/meta`
+
+The extractor – the point of the library. Turns HTML into the cooked link-preview card.
+
+**`metadata(source, url?, options?)` → `object`** – the batteries-included extractor. With no `options` it returns the default 21-field card (`title`, `description`, `image`, `imageAlt`, `imageWidth`, `imageHeight`, `url`, `type`, `author`, `date`, `publisher`, `keywords`, `locale`, `themeColor`, `twitterCard`, `video`, `audio`, plus the derived `icon`, `domain`, `lang`, `contentType`).
+- `url` *(string, optional)* – the page URL, base for resolving relative URL fields and the `/favicon.ico` fallback.
+- `options.rules` *(Rules, optional)* – run the pure engine with your own rules instead (no `icon`/`domain`/… – just your fields).
+- `options.oembedDiscovery` *(boolean, optional)* – also add `oembedUrl`, the page's oEmbed discovery endpoint (extraction only – fetches nothing). **Off by default:** a card already has title/image/description from the OG tags, so it's only worth it for the embed markup, or for URLs you can't scrape (see `hypertag/oembed`).
+
+**`extract(source, url, rules)` → `object`** – the domain-agnostic engine. `rules` maps each field to `{ <normalizer>: [ ...sources ] }`, where `<normalizer>` is `text` / `url` / `raw` and each source is a helper below. `extract.compile(rules)` bakes it for reuse.
+
+**Source helpers** (all variadic; arguments are preference order):
+- `meta(...keys)` – a meta value under `property` **or** `name`, read from `content`.
+- `link(...rels)` – a link's `href` by `rel` word.
+- `content(...tags)` – an element's text content.
+- `ld(...keys)` / `ldName(...keys)` / `ldUrl(...keys)` – a JSON-LD value, optionally coerced to a name or a URL.
+
+**`favicons(source, url?)` → `Icon[]`** – every `<link rel*=icon>` resolved against `url` and ranked best-first (SVG / `sizes="any"`, then largest raster, then apple-touch-icon; `mask-icon` and hrefless links dropped). `Icon` is `{ url, rel, sizes, type }`.
+**`favicon(source, url?)` → `string | null`** – the single best icon URL, or `/favicon.ico` at the origin when none is declared, or `null` when there is nothing and no `url`.
+**`rules`** – the default (overridable) rules object.
+
+The `meta` source-helpers (`meta`, `link`, `content`, `attr`, `ld`, `ldName`, `ldUrl`) are exported from this subpath, not from the `hypertag` barrel.
+
+## `hypertag/fetch`
+
+The one entry point that touches the network – a thin convenience wrapper so "URL in, card out" is a single call. Everything else takes HTML you already have.
+
+**`fromUrl(url, options?)` → `Promise<Metadata>`** – fetch `url` with the runtime's native `fetch` (Node 18+, Deno, Bun, edge) and run `metadata()` on the response body.
+- `options.fetch` *(function, optional)* – a `fetch` implementation to use instead of the global one.
+- `options.rules` *(Rules, optional)* – a custom metadata rules table, forwarded to `metadata()`.
+- any other `options` key passes through to `fetch` as request init (`headers`, `signal`, `method`, …); `redirect` defaults to `'follow'`.
+- **Returns** the metadata card, resolved against the response's final (post-redirect) URL. Throws `TypeError` if no `fetch` is available.
+
+Deliberately thin, and honest about its limits: the body is read as **UTF-8** (`res.text()`), and it applies **no SSRF policy**. For non-UTF-8 pages or untrusted URLs, pass an `options.fetch` that handles decoding or validates the target – the network's hard parts stay yours, by design.
+
+**`oembed(endpoint, options?)` → `Promise<unknown>`** – fetch and parse an oEmbed endpoint (the `oembed` URL on the metadata card, or one resolved via `hypertag/oembed`), returning the provider's JSON payload. Same `options` pluggability as `fromUrl`.
+
+## `hypertag/oembed`
+
+An opt-in, pluggable oEmbed **provider registry**, curated to ~25 popular providers (of the ~380 in `oembed.com/providers.json`). It resolves a page URL to its provider's oEmbed endpoint **without needing the page HTML** – the case in-page discovery can't cover (antibot / JS-rendered SPAs like Twitter/X, TikTok, Instagram, whose HTML you can't scrape anyway). Pure and dependency-free (~1.4 kB); pair it with `hypertag/fetch`'s `oembed()` to fetch the payload.
+
+**`oembedEndpoint(url, list?)` → `string | null`** – the ready-to-fetch oEmbed endpoint for `url` (target added as `url=`, `format=json`), or `null` when no provider matches.
+- `list` *(Provider[], optional)* – override or extend the default registry (e.g. the full `providers.json`, or your own subset). A `Provider` is `{ name, endpoint, schemes }`, where `schemes` are URL patterns with `*` wildcards.
+
+**`providers`** – the curated default registry array.
+
+```js
+import metadata from 'hypertag/meta'
+import {oembedEndpoint} from 'hypertag/oembed'
+import {oembed} from 'hypertag/fetch'
+
+// discovery first (opt in with {oembedDiscovery:true} when you have the HTML), else the
+// registry (for URLs you can't scrape, like TikTok/Twitter):
+const card = metadata(html, url, {oembedDiscovery: true})
+const endpoint = card.oembedUrl ?? oembedEndpoint('https://www.tiktok.com/@u/video/123')
+const embed = endpoint ? await oembed(endpoint) : null   // the provider's embed markup + data
+```
+
+## `hypertag/parse`
+
+The core, and the floor the extractor is built on. Scans HTML once and returns matched tags as plain objects – zero-dependency, edge-sized. Imported on its own (`import parse from 'hypertag/parse'`) it is the ~0.7 kB tiny primitive.
+
 **`parse(source, tags, options?, cache?)` → `Tag[]`**
-The core. Scans `source` once and returns every matching tag as a plain object.
+Scans `source` once and returns every matching tag as a plain object.
 - `source` *(string)* – the HTML to scan.
 - `tags` *(string | string[])* – tag name(s) to match; `'*'` matches every tag.
 - `options` *(object, optional)* – `tagKey` (key for the tag name, default `'$tag'`), `content` (also capture element content, default `false`), `contentKey` (key for that content, default `'$content'`).
@@ -42,7 +114,7 @@ Values may be unquoted, `'single'`, or `"double"` (the three are equivalent; unq
 **`pick(source, sources, options?)` → `string | Tag | undefined`** – the first usable value across `sources`, in preference order.
 - `sources` *(Array)* – each entry is a selector string, or a `[selector, attr]` pair. A bare selector reads `options.attr`; reading `'$content'` gets element text.
 - `options.attr` *(string)* – default attribute for bare-selector entries.
-- **Returns** the first present, non-empty value (or the matched `Tag` when no attribute is named); `undefined` if nothing matches. `pick.compile(sources, options?)` bakes it.
+- **Returns** the first present, non-empty value (or the matched `Tag` when no attribute is named); `undefined` if nothing matches. `pick.compile(sources, options?)` bakes it. `pick` stays on this subpath (not the barrel), where it does not collide with the JSON-LD `pick`.
 
 **Presets** – `og`, `twitter`, `icons`, `canonical`, `stylesheets`, `alternates`, `title`, `jsonld`, each `(source) => Tag[]`.
 
@@ -58,59 +130,5 @@ Values may be unquoted, `'single'`, or `"double"` (the three are equivalent; unq
 ## `hypertag/ld`
 
 **`ld(source)` → `object[]`** – parse every JSON-LD `<script>` block (and each `@graph`) into a flat list of objects; invalid blocks are skipped.
-**`pick(graph, ...keys)` → `unknown`** – first present value in `graph` for any of `keys`.
+**`pick(graph, ...keys)` → `unknown`** – first present value in `graph` for any of `keys`. Exported from this subpath (not the barrel), where it does not collide with the selector `pick`.
 **`asName(value)` / `asUrl(value)` → `unknown`** – coerce JSON-LD's `{name}` / `{url}`-or-array shapes to a string.
-
-## `hypertag/meta`
-
-**`metadata(source, url?, options?)` → `object`** – the batteries-included extractor. With no `options` it returns the default 21-field card (`title`, `description`, `image`, `imageAlt`, `imageWidth`, `imageHeight`, `url`, `type`, `author`, `date`, `publisher`, `keywords`, `locale`, `themeColor`, `twitterCard`, `video`, `audio`, plus the derived `icon`, `domain`, `lang`, `contentType`).
-- `url` *(string, optional)* – the page URL, base for resolving relative URL fields and the `/favicon.ico` fallback.
-- `options.rules` *(Rules, optional)* – run the pure engine with your own rules instead (no `icon`/`domain`/… – just your fields).
-- `options.oembedDiscovery` *(boolean, optional)* – also add `oembedUrl`, the page's oEmbed discovery endpoint (extraction only – fetches nothing). **Off by default:** a card already has title/image/description from the OG tags, so it's only worth it for the embed markup, or for URLs you can't scrape (see `hypertag/oembed`).
-
-**`extract(source, url, rules)` → `object`** – the domain-agnostic engine. `rules` maps each field to `{ <normalizer>: [ ...sources ] }`, where `<normalizer>` is `text` / `url` / `raw` and each source is a helper below. `extract.compile(rules)` bakes it for reuse.
-
-**Source helpers** (all variadic; arguments are preference order):
-- `meta(...keys)` – a meta value under `property` **or** `name`, read from `content`.
-- `link(...rels)` – a link's `href` by `rel` word.
-- `content(...tags)` – an element's text content.
-- `ld(...keys)` / `ldName(...keys)` / `ldUrl(...keys)` – a JSON-LD value, optionally coerced to a name or a URL.
-
-**`favicons(source, url?)` → `Icon[]`** – every `<link rel*=icon>` resolved against `url` and ranked best-first (SVG / `sizes="any"`, then largest raster, then apple-touch-icon; `mask-icon` and hrefless links dropped). `Icon` is `{ url, rel, sizes, type }`.
-**`favicon(source, url?)` → `string | null`** – the single best icon URL, or `/favicon.ico` at the origin when none is declared, or `null` when there is nothing and no `url`.
-**`rules`** – the default (overridable) rules object.
-
-## `hypertag/fetch`
-
-The one entry point that touches the network – a thin convenience wrapper so "URL in, card out" is a single call. Everything else takes HTML you already have.
-
-**`fromUrl(url, options?)` → `Promise<Metadata>`** – fetch `url` with the runtime's native `fetch` (Node 18+, Deno, Bun, edge) and run `metadata()` on the response body.
-- `options.fetch` *(function, optional)* – a `fetch` implementation to use instead of the global one.
-- `options.rules` *(Rules, optional)* – a custom metadata rules table, forwarded to `metadata()`.
-- any other `options` key passes through to `fetch` as request init (`headers`, `signal`, `method`, …); `redirect` defaults to `'follow'`.
-- **Returns** the metadata card, resolved against the response's final (post-redirect) URL. Throws `TypeError` if no `fetch` is available.
-
-Deliberately thin, and honest about its limits: the body is read as **UTF-8** (`res.text()`), and it applies **no SSRF policy**. For non-UTF-8 pages or untrusted URLs, pass an `options.fetch` that handles decoding or validates the target – the network's hard parts stay yours, by design.
-
-**`oembed(endpoint, options?)` → `Promise<unknown>`** – fetch and parse an oEmbed endpoint (the `oembed` URL on the metadata card, or one resolved via `hypertag/oembed`), returning the provider's JSON payload. Same `options` pluggability as `fromUrl`.
-
-## `hypertag/oembed`
-
-An opt-in, pluggable oEmbed **provider registry**, curated to ~25 popular providers (of the ~380 in `oembed.com/providers.json`). It resolves a page URL to its provider's oEmbed endpoint **without needing the page HTML** – the case in-page discovery can't cover (antibot / JS-rendered SPAs like Twitter/X, TikTok, Instagram, whose HTML you can't scrape anyway). Pure and dependency-free (~1.7 kB); pair it with `hypertag/fetch`'s `oembed()` to fetch the payload.
-
-**`oembedEndpoint(url, list?)` → `string | null`** – the ready-to-fetch oEmbed endpoint for `url` (target added as `url=`, `format=json`), or `null` when no provider matches.
-- `list` *(Provider[], optional)* – override or extend the default registry (e.g. the full `providers.json`, or your own subset). A `Provider` is `{ name, endpoint, schemes }`, where `schemes` are URL patterns with `*` wildcards.
-
-**`providers`** – the curated default registry array.
-
-```js
-import metadata from 'hypertag/meta'
-import {oembedEndpoint} from 'hypertag/oembed'
-import {oembed} from 'hypertag/fetch'
-
-// discovery first (opt in with {oembedDiscovery:true} when you have the HTML), else the
-// registry (for URLs you can't scrape, like TikTok/Twitter):
-const card = metadata(html, url, {oembedDiscovery: true})
-const endpoint = card.oembedUrl ?? oembedEndpoint('https://www.tiktok.com/@u/video/123')
-const embed = endpoint ? await oembed(endpoint) : null   // the provider's embed markup + data
-```
