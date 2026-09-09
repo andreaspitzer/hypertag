@@ -53,6 +53,52 @@ const exec = (cmd, args, cwd) =>
   execFileSync(cmd, args, {cwd, stdio: 'inherit', env: process.env, shell: false})
 
 /**
+ * Steps 1-2 of the driver, exported so other harnesses reuse the SAME pack step
+ * (ticket 03: bundle the PACKED TARBALL, not the repo source). Makes a throwaway
+ * consumer dir, packs the publishable tarball into it, and writes a minimal ESM
+ * package.json that depends on that tarball. The caller owns cleanup (`rmSync`).
+ *
+ * The Cloudflare deploy-check (ticket 13) uses this so the deployed worker bundles
+ * the real published package exactly as tier-1/tier-2's installs do.
+ *
+ * @param {object} opts
+ * @param {string} opts.label  log/dir label, e.g. 'tier1' / 'handler' / 'cf'.
+ * @returns {{consumer: string, tarball: string}} the consumer dir and tarball basename.
+ */
+export function packConsumer({label}) {
+  const consumer = mkdtempSync(join(tmpdir(), `hypertag-${label}-`))
+
+  // 1. Pack the publishable tarball straight into the consumer dir.
+  // `--ignore-scripts`: the repo's `prepare` lifecycle only installs husky git hooks
+  // (no build step), which need not and should not run during packing.
+  console.log(`${label}: npm pack`)
+  execFileSync('npm', ['pack', '--pack-destination', consumer, '--ignore-scripts', '--silent'], {
+    cwd: repoRoot,
+    stdio: ['ignore', 'inherit', 'inherit']
+  })
+  const tarball = readdirSync(consumer).find(f => f.endsWith('.tgz'))
+  if (!tarball) throw new Error('npm pack produced no .tgz')
+
+  // 2. Minimal ESM consumer that depends on the packed tarball.
+  writeFileSync(
+    join(consumer, 'package.json'),
+    `${JSON.stringify(
+      {
+        name: `hypertag-${label}-consumer`,
+        version: '0.0.0',
+        private: true,
+        type: 'module',
+        dependencies: {hypertag: `file:./${tarball}`}
+      },
+      null,
+      2
+    )}\n`
+  )
+
+  return {consumer, tarball}
+}
+
+/**
  * Pack the library, install it into a throwaway consumer, copy the harness files in,
  * and run one tier entry under the target runtime. Sets process.exitCode on failure.
  *
@@ -79,34 +125,8 @@ export function packRun({
 
   let consumer
   try {
-    consumer = mkdtempSync(join(tmpdir(), `hypertag-${label}-`))
-
-    // 1. Pack the publishable tarball straight into the consumer dir.
-    console.log(`${label}[${target}]: npm pack`)
-    // `--ignore-scripts`: the repo's `prepare` lifecycle only installs husky git
-    // hooks (no build step), which need not and should not run during packing.
-    execFileSync('npm', ['pack', '--pack-destination', consumer, '--ignore-scripts', '--silent'], {
-      cwd: repoRoot,
-      stdio: ['ignore', 'inherit', 'inherit']
-    })
-    const tarball = readdirSync(consumer).find(f => f.endsWith('.tgz'))
-    if (!tarball) throw new Error('npm pack produced no .tgz')
-
-    // 2. Minimal ESM consumer that depends on the packed tarball.
-    writeFileSync(
-      join(consumer, 'package.json'),
-      `${JSON.stringify(
-        {
-          name: `hypertag-${label}-consumer`,
-          version: '0.0.0',
-          private: true,
-          type: 'module',
-          dependencies: {hypertag: `file:./${tarball}`}
-        },
-        null,
-        2
-      )}\n`
-    )
+    // 1-2. Pack the publishable tarball into a throwaway consumer that depends on it.
+    ;({consumer} = packConsumer({label}))
 
     // 3. The harness files run *inside* the consumer so `hypertag` resolves to the install.
     for (const file of new Set(['assert.mjs', entry, ...copy])) {
