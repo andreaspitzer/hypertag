@@ -1,7 +1,7 @@
 # Provision provider accounts + CI credentials (Cloudflare, Deno Deploy, Vercel)
 
 Type: task
-Status: claimed
+Status: resolved
 Blocked by: 04, 05, 06
 
 ## Question
@@ -131,6 +131,30 @@ these deltas now reflected above:
   confirmed; **added Trusted Sources (OIDC)** as the now-recommended alternative that removes one
   long-lived secret. The deploy command itself (`--prebuilt` pattern, disabling the native Git
   integration) is a CI-wiring detail – noted on tickets 06 and 10, not a provisioning step.
+
+## Answer
+
+Provisioning complete for **Cloudflare + Vercel + GitHub Pages** (2026-09-09); **Deno Deploy
+deferred** (signup blocked). Secret **names** now present as GitHub Actions repository secrets (values
+not recorded here):
+
+- Cloudflare: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`
+- Vercel: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
+
+Non-secret facts the build depends on:
+
+- **Vercel preview-URL access: Trusted Sources (OIDC) configured** – no `VERCEL_AUTOMATION_BYPASS_SECRET`
+  needed; the deployed Vercel tier-2 job authenticates via GitHub Actions OIDC, nothing to store or
+  rotate.
+- **Tier-2 fixture host:** GitHub Pages enabled at **https://andreaspitzer.github.io/hypertag/**
+  (ticket 02's controlled fixture URL).
+- **Deno Deploy: deferred** – account creation returns `403 SIGNUP_UNAVAILABLE`; `DENO_DEPLOY_TOKEN`
+  + Deno org/app/region not yet provisioned. The deployed Deno Deploy tier-2 job (ticket 16) is
+  blocked on external EA signup; Deno the runtime stays covered by the local tier-2 run.
+
+Consumed by the CI wiring (ticket 10 / `edge-e2e.yml`): the Cloudflare pair (CF deployed job), the
+Vercel trio + OIDC Trusted Sources (Vercel deployed job), and the Pages URL (all tier-2). Node / Bun /
+Deno local runs need no secrets.
 
 Sources: Cloudflare [Create API token](https://developers.cloudflare.com/fundamentals/api/get-started/create-token/),
 [Find account and zone IDs](https://developers.cloudflare.com/fundamentals/account/find-account-and-zone-ids/);

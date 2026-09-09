@@ -86,37 +86,39 @@ later.
   existing Node `smoke` job; tier 1 + local tier 2 as a runtime matrix on every push/PR (required,
   gate release); the three deployed tier-2 jobs on default-branch / dispatch, **allowed to fail** so
   a provider outage never reddens core CI.
+- [Provision accounts + CI secrets](issues/09-provision-accounts-secrets.md) – **done for Cloudflare +
+  Vercel + GitHub Pages**; secrets `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` / `VERCEL_TOKEN` /
+  `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` set, Vercel preview access via **Trusted Sources (OIDC)** (no
+  bypass secret), fixture host **https://andreaspitzer.github.io/hypertag/**. **Deno Deploy deferred**
+  (`403 SIGNUP_UNAVAILABLE`) → its deployed job is ticket 16.
 
-**Frontier now:** all contracts are settled. The one open item is the **HITL** ticket
-[Provision accounts + CI secrets](issues/09-provision-accounts-secrets.md) – its copy-pasteable
-checklist is ready, and the maintainer creates the Cloudflare / Vercel accounts + GitHub Pages and
-records the secret names. Everything buildable without secrets (the tier-1 harness +
-Node / Bun / Deno runners, the local tier-2, the shared edge handler, and the fixture) can proceed in
-parallel; the three deployed tier-2 jobs and their CI wiring wait on 09.
+**Frontier now: all decisions are settled and provisioning is done – the map has crossed into the
+build.** The build fog has graduated into execution tickets:
+
+- Takeable now (unblocked, no secrets): [tier-1 harness + runners](issues/11-tier1-harness-runners.md),
+  [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md).
+- Takeable now (secrets ready): [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md),
+  then [Vercel deployed](issues/14-vercel-edge-deploy.md) (blocked by 13 for the shared handler).
+- Waiting: [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) (blocked by 11–14).
+- Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – do not claim until
+  Deno EA signup reopens; Deno the runtime is covered by the local tier-2 run (12) meanwhile.
 
 > **Deno Deploy signup blocked (2026-09-09).** Account creation returns `403 SIGNUP_UNAVAILABLE`.
-> Maintainer decision: **proceed without it, defer the deployed Deno Deploy tier-2 job** (Deno the
-> runtime stays covered locally in CI; that job is already allowed-to-fail per ticket 10). Ticket 09
-> resolves on Cloudflare + Vercel + Pages; the deployed Deno Deploy endpoint/job is a small follow-up
-> for when EA signup reopens. Detail in ticket 09's blocked note.
+> Maintainer decision: proceed without it, defer the deployed Deno Deploy tier-2 job (ticket 16). Deno
+> the runtime stays covered by the local tier-2 run (ticket 12); that deployed job is already
+> allowed-to-fail per ticket 10.
 
 ## Not yet specified
 
 <!-- in-scope fog; graduates into tickets as the frontier advances -->
 
-- **The portable tier-1 harness, per runtime.** Once the import surface is settled (01) and each
-  runtime's module resolution is known (04–07), the actual runtime-portable smoke files/commands.
-  One patch, likely several tickets (one per runtime, or one shared harness + per-runtime runners).
-- **The tier-2 endpoint app(s) + live-URL assertions.** Graduates from the tier-2 contract (02),
-  the deployment model (08), and provisioning (09): the small `fromUrl` handler per provider, the
-  target it hits, and how the CI job asserts the returned card. *The Deno Deploy deployed endpoint +
-  job is deferred pending Deno EA signup (see the frontier note); Cloudflare + Vercel proceed now.*
-- **The GitHub Actions wiring itself.** The concrete jobs/matrix/secrets that run both tiers across
-  the runtimes, graduating from the CI-structure decision (10) and provisioning (09).
+<!-- The tier-1 harness, the tier-2 endpoints + live-URL assertions, and the GitHub Actions wiring
+have graduated into build tickets 11–16 (see Frontier). Only downstream fog remains: -->
+
 - **README / claim reconciliation.** If a runtime fails or needs a caveat (a real ESM/bundling gap,
   a `nodejs_compat` dependency, an outbound-fetch restriction), reconciling the README's "runs on …
   every edge runtime" claim + badges to what the tests actually prove. Downstream once tests reveal
-  reality.
+  reality – graduates after the build tickets run and surface any gaps.
 
 ## Out of scope
 
