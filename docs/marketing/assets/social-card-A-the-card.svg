@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <title>hypertag – turn a URL into a link-preview card, on the edge</title>
   <!-- hypertag social preview – Concept A: "The card" (JTBD / problem-first).
        1280x640. Export to PNG at 2x for GitHub's social-preview upload.
        Rules honoured: link-preview-first (P1/P2), extractor is the point (P3),
