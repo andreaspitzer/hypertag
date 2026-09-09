@@ -51,3 +51,16 @@ free-tier (Hobby) target; one real blocker (preview-URL protection) and one tick
 
 Feeds: ticket 01 (subpath proof), ticket 08 (preview deploy model + protection bypass in the assert
 step), ticket 09 (`VERCEL_TOKEN` + org/project ids + protection-bypass secret; pre-create project).
+
+## Follow-up note (verified Sep 2026)
+
+Re-verified against Vercel's current GitHub Actions guide, two refinements for the endpoint/CI build
+(the research decisions stand):
+
+- **Deploy command:** prefer the documented `vercel pull --yes --environment=preview` → `vercel build`
+  → `vercel deploy --prebuilt` pattern over a bare `vercel deploy --yes`, so the build runs once in CI.
+- **Preview-URL access:** **Trusted Sources** (Settings → Deployment Protection → Trusted Sources)
+  now authorises GitHub Actions via short-lived OIDC and is Vercel's recommended alternative to the
+  static `VERCEL_AUTOMATION_BYPASS_SECRET` – it removes one long-lived secret. Static secret remains
+  the simpler fallback. Source:
+  [GitHub Actions with Vercel](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel).

@@ -55,3 +55,15 @@ The CI structure that runs both tiers across the five runtimes:
    `npm test && npm run smoke` precedent extends to them). Deployed tier 2 runs independently on the
    default branch / dispatch and is **not** a hard release gate – a third-party provider outage must
    not block a publish.
+
+## Follow-up note (verified Sep 2026)
+
+Two Vercel-job details confirmed against Vercel's current GitHub Actions guide, for when the deployed
+tier-2 jobs graduate into YAML:
+
+- **Build once:** use `vercel pull` → `vercel build` → `vercel deploy --prebuilt` rather than a bare
+  `vercel deploy`, so CI doesn't pay for the build twice.
+- **Avoid double deploys:** with a pre-created Vercel project, set `"git": { "deploymentEnabled":
+  false }` in `vercel.json` so the native Git integration and the Actions deploy don't both fire on a
+  push. Source:
+  [GitHub Actions with Vercel](https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel).
