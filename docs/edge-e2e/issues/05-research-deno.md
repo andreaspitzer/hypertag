@@ -1,7 +1,7 @@
 # Research: Deno + Deno Deploy – local run, CI deploy, npm: resolution, native fetch
 
 Type: research
-Status: open
+Status: claimed
 
 ## Question
 

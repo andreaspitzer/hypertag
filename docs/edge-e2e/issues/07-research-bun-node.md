@@ -1,7 +1,7 @@
 # Research: Bun + Node baseline – local run in CI, ESM/subpath resolution, native fetch
 
 Type: research
-Status: open
+Status: claimed
 
 ## Question
 

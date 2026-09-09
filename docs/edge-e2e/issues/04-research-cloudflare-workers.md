@@ -1,7 +1,7 @@
 # Research: Cloudflare Workers – CI deploy, ESM/subpath resolution, native fetch, free tier
 
 Type: research
-Status: open
+Status: claimed
 
 ## Question
 
