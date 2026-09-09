@@ -1,0 +1,72 @@
+name: claims
+
+# Verifies the README's size / correctness / performance claims, split by how reliably each
+# can be measured in CI:
+#
+#   * REQUIRED (push + pull_request): the DETERMINISTIC claims - per-layer gzipped ship size
+#     (test/claims/size-gate.mjs, budgets in test/claims/budgets.mjs) and the 12/12 extractor
+#     correctness (test/claims/correctness-gate.mjs). No network, no timing, no competitor
+#     libraries, so these gate the branch: a layer shipping more than the README's table
+#     claims, or a messy-case regression, turns CI red.
+#   * INFORMATIONAL (push to develop + workflow_dispatch, continue-on-error): the NOISY claims
+#     - extraction speed and peak/retained memory vs the competitor libraries (benchmark/).
+#     Shared runners make absolute speed/memory numbers vary run-to-run, so these are TRACKED
+#     (printed to the run summary), never gated - matching benchmark/memory.mjs's own caveat.
+#     Reproduce locally with `cd benchmark && npm run bench`.
+#
+# Branch protection (maintainer action, not encoded here): mark `claims (size + correctness)`
+# as a required status check; do NOT require the allowed-to-fail `track speed + memory` job.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # --- REQUIRED: deterministic size + correctness gates ---------------------------------
+  size-and-correctness:
+    name: claims (size + correctness)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Size + correctness claim gates
+        run: npm run claims
+
+  # --- INFORMATIONAL: speed + memory, tracked not gated --------------------------------
+  # Needs the competitor libraries (jsdom, cheerio, ...) from benchmark/, so it is heavier and
+  # kept off fork PRs; continue-on-error means runner noise never reddens core CI.
+  bench:
+    name: track speed + memory (informational)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/develop')
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install benchmark deps (competitor libraries)
+        working-directory: benchmark
+        run: npm install --no-audit --no-fund
+      - name: Speed + memory benchmark (tracked, not gated)
+        working-directory: benchmark
+        run: |
+          {
+            echo '### hypertag speed + memory (informational)'
+            echo
+            echo 'Absolute numbers vary on shared CI runners; treat as order-of-magnitude, not a gate. Reproduce locally with `cd benchmark && npm run bench`.'
+            echo
+            echo '```'
+            npm run --silent bench
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
