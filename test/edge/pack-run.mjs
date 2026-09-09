@@ -40,11 +40,14 @@ const RUNNERS = {
     run: (entry, _permissions) => ['bun', ['run', entry]]
   },
   deno: {
-    // Deno resolves the bare specifier from a node_modules dir it materializes.
-    install: ['deno', ['install', '--allow-scripts', '--node-modules-dir=auto']],
+    // Deno can't resolve a `file:` npm dependency in `--node-modules-dir=auto`
+    // ("Importing npm packages via a file: specifier is only supported with
+    // --node-modules-dir=manual"). So install with npm to materialize node_modules
+    // from the packed tarball, then run Deno in `manual` mode against that dir.
+    install: ['npm', ['install', '--no-audit', '--no-fund', '--no-package-lock', '--silent']],
     run: (entry, permissions) => [
       'deno',
-      ['run', ...permissions, '--node-modules-dir=auto', entry]
+      ['run', ...permissions, '--node-modules-dir=manual', entry]
     ]
   }
 }
