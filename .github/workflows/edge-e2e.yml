@@ -47,6 +47,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
+      # Install devDependencies so `npm pack` (inside the smoke driver) can run the
+      # repo's `prepare` (husky) lifecycle - without node_modules it fails "husky: not
+      # found". Mirrors ci.yml's test job.
+      - run: npm ci
       - name: Tier 1 (import + parse, stubbed fetch)
         run: npm run smoke:edge:tier1:node
       - name: Start local fixture server (tier-2 bootstrap)
@@ -81,7 +86,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: oven-sh/setup-bun@v2
+      - run: npm ci
       - name: Tier 1 (import + parse, stubbed fetch)
         run: npm run smoke:edge:tier1:bun
       - name: Start local fixture server (tier-2 bootstrap)
@@ -115,9 +122,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
+      - run: npm ci
       - name: Tier 1 (import + parse, stubbed fetch)
         run: npm run smoke:edge:tier1:deno
       - name: Start local fixture server (tier-2 bootstrap)
@@ -158,6 +167,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Deployed tier 2 (ephemeral Workers preview)
         run: npm run smoke:edge:cf
         env:
@@ -183,6 +194,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       - name: Deployed tier 2 (ephemeral Vercel Edge preview)
         run: npm run smoke:edge:vercel
         env:
