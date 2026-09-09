@@ -124,17 +124,53 @@ two-tier edge tests exist and run:
 - ✅ [Vercel deployed](issues/14-vercel-edge-deploy.md)
 - ✅ [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md)
 
+**Deployed tier-2 PROVEN in real CI (2026-09-09):** with the Pages fixture live, `edge-e2e.yml`
+dispatched end-to-end. The required matrix (Node 18/20/22/24, Bun, Deno) is green, and **Cloudflare's
+deployed job is GREEN** – a real ephemeral Worker deployed to `*.workers.dev`, ran `fromUrl` against the
+live fixture with native fetch, its card **exact-matched `EXPECTED`**, and it tore itself down (run
+`34383953795`). One flake fixed en route: a fresh unique-named worker's `*.workers.dev` hostname returns
+404 until it propagates, and the 10×3s (30s) retry window sometimes lost that race; widened to 40×3s
+(~2 min) in `test/edge/cloudflare/deploy-check.mjs` (commit `cd5209e`, on `claude/edge-e2e-8d9irp` –
+still to reach `develop`). Vercel's deployed job stays red on **credentials** (its `VERCEL_ORG_ID` /
+`VERCEL_PROJECT_ID` / `VERCEL_TOKEN` don't resolve to an accessible project) – a secrets fix, not code.
+
 Remaining:
 
+- 🔴 **Vercel deployed job** – blocked on the three `VERCEL_*` secrets resolving to a reachable project
+  (maintainer). Everything else in the Vercel path (pre-link, OIDC assert) is in place and proven up to
+  the `vercel pull` credential step.
+- 🟡 **Land the Cloudflare retry-window fix (`cd5209e`) on `develop`** so develop-push runs carry it, not
+  just the dispatch on `claude/edge-e2e-8d9irp`.
 - 🚫 Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – awaits Deno EA
   signup (`403 SIGNUP_UNAVAILABLE`); Deno the runtime is covered by the local tier-2 matrix meanwhile.
 - Downstream fog: README / claim reconciliation, once CI results reveal reality (see Not yet specified).
 
-**Reaching "green in CI" (the destination) now rests on CI runs + two maintainer settings:**
-(1) repo **Settings → Pages → Source = "GitHub Actions"** so the fixture goes live (required for the
-deployed jobs on develop); (2) mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs as required
-status checks on `develop` (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel jobs first run
-on push to `develop` / `workflow_dispatch`, never on a PR (the stack merges into `develop`).
+**Reaching "green in CI" (the destination) now rests on CI runs + the maintainer settings below.**
+
+**Pages published from `master` (PR #13, merged).** `pages.yml` + the fixture + the root `vercel.json`
+(`git.deploymentEnabled:false`) were carried to `master` on their own – a minimal PR, NOT the full stack
+– because GitHub's Actions UI, the `workflow_dispatch` button, and the `github-pages` environment's
+default deployment-branch rule are all keyed to the **default branch (`master`)**. So `pages.yml` runs
+`master` + `develop`; the deploy from `master` needs no environment-rule change; and `master` has **no
+`CNAME`**, so the fixture serves at `https://andreaspitzer.github.io/hypertag/`. After the merge the
+maintainer must still: **Settings → Pages → Source = "GitHub Actions"** (dismiss the suggested starter
+workflow – `pages.yml` *is* the Pages workflow), then **Actions → Pages → Run workflow** on `master` (or
+push a fixture change) to publish the first deploy. That turns the **Cloudflare** deployed job green on
+the next `develop` run (its `wrangler deploy` fix is proven; today it fails only on the fixture 404).
+
+**Required status checks:** mark the six **`tier-1-and-local-tier-2 (...)`** matrix jobs (Node 18/20/22/24,
+Bun, Deno) as required checks on **`develop`** (NOT the allowed-to-fail deploy jobs). The deployed CF/Vercel
+jobs first run on push to `develop` / `workflow_dispatch`, never on a PR (the stack merges into `develop`).
+
+**Two landmines for the eventual `develop` → `master` promotion of the full stack:**
+- **`CNAME`.** `develop` still carries `CNAME` → `hypertag.js.org`; `master` deleted it. The promotion
+  merge must **keep the deletion** (do not reintroduce `CNAME`), or Pages flips to the custom domain and
+  breaks the `andreaspitzer.github.io/hypertag/` fixture URL the whole tier-2 suite is pinned to.
+- **Required checks belong on the branch that produces them.** The six `tier-1-and-local-tier-2 (...)`
+  checks come from `edge-e2e.yml`, which lives only on `develop`, and they also need the library itself
+  to pass (they pack + import it). So do **not** require them on `master` until the full stack is on
+  `master` – otherwise every `master` PR deadlocks "Expected — waiting for status" (PR #13 hit exactly
+  this). Add them to `master`'s required set only *after* the promotion lands.
 
 ## Not yet specified
 
