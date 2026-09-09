@@ -104,6 +104,12 @@ later.
   per provider; CF worker + `wrangler.toml` (no nodejs_compat) + ephemeral `deploy-check.mjs`
   (`smoke:edge:cf`). Handler green on Node/Bun + local workerd (`wrangler dev`); remote deploy via CI.
   Commit `fa7d6f2`.
+- [Build: Vercel deployed](issues/14-vercel-edge-deploy.md) – `api/edge-e2e.js` (`config runtime:'edge'`)
+  wrapping the shared handler + `vercel.json` (`deploymentEnabled:false`); ephemeral
+  `vercel pull/build/deploy --prebuilt` deploy-check (`smoke:edge:vercel`) authorised to the protected
+  preview via **Trusted Sources OIDC** (`x-vercel-trusted-oidc-idp-token`, audience
+  `github.com/andreaspitzer`). Wrapper green Node/Bun; deploy via CI. Job needs `id-token: write`.
+  Commit `00120ed`.
 
 **Frontier now: all decisions are settled and provisioning is done – the map has crossed into the
 build.** The build fog has graduated into execution tickets:
@@ -113,8 +119,10 @@ build.** The build fog has graduated into execution tickets:
   live URL + Deno via CI; needs Pages Source = "GitHub Actions").
 - ✅ Done: [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md)
   (handler green on Node/Bun + local workerd; remote deploy via CI).
-- Takeable now (secrets ready): [Vercel deployed](issues/14-vercel-edge-deploy.md) (wraps 13's handler).
-- Waiting: [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) (blocked by 11–14).
+- ✅ Done: [Vercel deployed](issues/14-vercel-edge-deploy.md) (wrapper green; Trusted Sources OIDC;
+  deploy via CI).
+- Takeable now (11–14 done): [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) – ties the runtime
+  matrix + CF/Vercel deploy jobs together; first place the real deploys + live Pages fixture run.
 - Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – do not claim until
   Deno EA signup reopens; Deno the runtime is covered by the local tier-2 run (12) meanwhile.
 
