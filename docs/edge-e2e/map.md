@@ -99,6 +99,11 @@ later.
   `pages.yml` deploy workflow; runtime-agnostic native-`fromUrl` exact-match check (`test/edge/tier2.mjs`,
   `FIXTURE_URL` / `EXPECTED` reused downstream); shared `pack-run.mjs` driver. Node + Bun green
   (localhost); Deno + live URL via CI. Commit `7754eea`. **Needs Pages Source = "GitHub Actions".**
+- [Build: shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md) – the
+  one web-standard `handler(request)` (reads `?url=`, `fromUrl`, JSON card; 400/502 on error) wrapped
+  per provider; CF worker + `wrangler.toml` (no nodejs_compat) + ephemeral `deploy-check.mjs`
+  (`smoke:edge:cf`). Handler green on Node/Bun + local workerd (`wrangler dev`); remote deploy via CI.
+  Commit `fa7d6f2`.
 
 **Frontier now: all decisions are settled and provisioning is done – the map has crossed into the
 build.** The build fog has graduated into execution tickets:
@@ -106,8 +111,9 @@ build.** The build fog has graduated into execution tickets:
 - ✅ Done: [tier-1 harness + runners](issues/11-tier1-harness-runners.md) (Node + Bun green; Deno via CI).
 - ✅ Done: [local tier-2 + Pages fixture](issues/12-local-tier2-fixture.md) (Node + Bun green localhost;
   live URL + Deno via CI; needs Pages Source = "GitHub Actions").
-- Takeable now (secrets ready): [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md),
-  then [Vercel deployed](issues/14-vercel-edge-deploy.md) (blocked by 13 for the shared handler).
+- ✅ Done: [shared edge handler + Cloudflare deployed](issues/13-edge-handler-cloudflare-deploy.md)
+  (handler green on Node/Bun + local workerd; remote deploy via CI).
+- Takeable now (secrets ready): [Vercel deployed](issues/14-vercel-edge-deploy.md) (wraps 13's handler).
 - Waiting: [edge-e2e.yml CI wiring](issues/15-ci-edge-e2e-yml.md) (blocked by 11–14).
 - Blocked (external): [Deno Deploy deployed](issues/16-deno-deploy-deploy.md) – do not claim until
   Deno EA signup reopens; Deno the runtime is covered by the local tier-2 run (12) meanwhile.
