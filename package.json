@@ -84,6 +84,10 @@
     "lint": "biome lint",
     "format": "biome format --write",
     "smoke": "node scripts/smoke.js",
+    "smoke:edge:tier1": "node test/edge/run-tier1.mjs node",
+    "smoke:edge:tier1:node": "node test/edge/run-tier1.mjs node",
+    "smoke:edge:tier1:bun": "node test/edge/run-tier1.mjs bun",
+    "smoke:edge:tier1:deno": "node test/edge/run-tier1.mjs deno",
     "prepublishOnly": "npm test && npm run smoke",
     "release": "commit-and-tag-version",
     "prepare": "husky"
@@ -96,6 +100,12 @@
     "c8": "^12.0.0",
     "commit-and-tag-version": "^13.1.2",
     "husky": "^9.1.7"
+  },
+  "ava": {
+    "files": [
+      "test/**/*",
+      "!test/edge/**"
+    ]
   },
   "commitlint": {
     "extends": [
